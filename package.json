@@ -1,0 +1,22 @@
+{
+  "name": "loom.kits",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LayaAir editor plugins and development tools.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "tsc --noEmit --pretty false",
+    "test": "node --test tests/*.test.cjs",
+    "build": "node scripts/build-plugins.mjs",
+    "build:web": "node scripts/laya.mjs build web",
+    "preview": "node scripts/laya.mjs run",
+    "list:plugins": "node scripts/build-plugins.mjs --list",
+    "verify:collector": "node scripts/verify-collector.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

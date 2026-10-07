@@ -1,0 +1,8 @@
+{
+  "name": "loom.kits.manual-atlas-collector",
+  "displayName": "Manual Atlas Collector",
+  "version": "1.0.1",
+  "description": "Integrate external LayaAir atlases with the editor, preview and build pipeline.",
+  "author": "eggbbq",
+  "license": "MIT"
+}

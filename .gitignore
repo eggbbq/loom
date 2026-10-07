@@ -1,0 +1,13 @@
+# Laya generated caches and build output
+/library/
+/local/
+/temp/
+/release/
+/bin/
+
+# Node dependencies
+/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db

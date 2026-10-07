@@ -1,0 +1,13 @@
+{
+  "name": "loom.kits",
+  "startupScene": "res://a0debf93-4f07-4cd2-95b6-6b8920887ae2",
+  "android": {
+    "targetArchitectures": {
+      "ARMv7": false,
+      "ARM64": true,
+      "x86": false,
+      "x86-64": false
+    },
+    "exportFormat": "APK"
+  }
+}
