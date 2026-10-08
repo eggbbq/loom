@@ -14,7 +14,8 @@
     "build:web": "node scripts/laya.mjs build web",
     "preview": "node scripts/laya.mjs run",
     "list:plugins": "node scripts/build-plugins.mjs --list",
-    "verify:collector": "node scripts/verify-collector.mjs"
+    "verify:collector": "node scripts/verify-collector.mjs",
+    "verify:address-mapping": "node scripts/verify-address-mapping.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3"

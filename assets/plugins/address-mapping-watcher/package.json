@@ -1,0 +1,8 @@
+{
+  "name": "loom.kits.address-mapping-watcher",
+  "displayName": "Address Mapping Watcher",
+  "version": "1.1.1",
+  "description": "Generate resource address mappings through native LayaAir asset events, CLI and build hooks.",
+  "author": "eggbbq",
+  "license": "MIT"
+}

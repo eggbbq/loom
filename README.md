@@ -26,6 +26,7 @@ Node.js 要求 20 或更新版本。安装官方 LayaAir CLI 后，执行 `layaa
 | `npm run build` | 检查、测试并导出所有插件安装包 |
 | `npm run build -- manual-atlas-collector` | 只导出指定插件；仍执行项目检查与测试 |
 | `npm run verify:collector` | 在隔离工程中安装产物，验证实际包入口和资源导出 |
+| `npm run verify:address-mapping` | 在隔离工程中安装产物，验证配置、CLI 与映射资源导出 |
 | `npm run build:web` | 构建开发工程的 Web 演示，用于验证资源导出 |
 | `npm run preview` | 启动官方 CLI 预览服务器 |
 
@@ -57,6 +58,7 @@ release/plugins/           生成的安装包，Git 忽略
 ## 当前插件
 
 - [Manual Atlas Collector](assets/plugins/manual-atlas-collector/README.md)：手工图集收集器，将所选 `.atlas` 接入编辑器、预览与发布资源索引。
+- [Address Mapping Watcher](assets/plugins/address-mapping-watcher/README.md)：通过原生资源事件维护短键地址映射，支持多目录配置、CLI 校验和发布收集。
 
 ## 许可证
 

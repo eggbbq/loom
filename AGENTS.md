@@ -10,6 +10,7 @@
 - 插件必须能独立安装；不要引入 Mistedge 的资源、业务代码、配置 UUID 或绝对路径。
 - 演示资源放在 `assets/examples/`，测试放在 `tests/`，不随插件安装包分发。
 - 包运行时入口必须验证安装后的执行结果，不能只验证源码模式；仅有顶层副作用的脚本可能被安装包编译器忽略。
+- CLI / `runScript` 调用的注册类静态入口不能依赖 `this` 指向类，必须显式引用类名；已由 Address Mapping 的实际安装调用验证。
 - 使用官方 CLI 的 `export-installable-package`，不将普通资源包当作安装包。含运行时脚本的目录不要用仅生成 UI/Scene 的 `precompile`。
 - 新插件通过通用构建脚本自动发现。完成变更后运行 `npm run build`；涉及资源导出时另行验证 `npm run build:web`。
 - 保持标准 Laya 工程结构，缓存和构建产物不入库。发布到远程仓库或商店按用户明确要求执行。

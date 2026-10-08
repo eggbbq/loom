@@ -1,0 +1,25 @@
+{
+  "__doc__": [
+    "watchDirs: 观察并递归扫描的目录列表，路径相对 assets，例如 resources/icons。空数组不生成映射。",
+    "extensions: 所有观察目录使用的扩展名列表，大小写不敏感。",
+    "output: 相对 assets 的 JSON 输出路径；保持 $path + 文件名索引格式。",
+    "debounceMs: 原生资源事件合并时间（毫秒）。runOnStart: IDE 加载时生成。pretty: 格式化 JSON。",
+    "保存配置自动生效；移动、删除、新增目录均由 Laya 资源数据库通知，不使用文件轮询。",
+    "重名保留配置目录顺序、目录内路径排序后的第一项，并在控制台列出所有冲突。",
+    "插件更新和重新加载保留此配置；CLI 的 runNow/check 与发布使用同一份配置。"
+  ],
+  "watchDirs": [
+    "examples/address-mapping-watcher/icons",
+    "examples/address-mapping-watcher/portraits"
+  ],
+  "extensions": [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp"
+  ],
+  "output": "examples/address-mapping-watcher/address.json",
+  "debounceMs": 600,
+  "runOnStart": true,
+  "pretty": false
+}
