@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# 设置脚本路径
+SCRIPT_DIR="$(dirname "$0")"
+CHECK_SCRIPT="$SCRIPT_DIR/check_excel_naming.sh"
+VALIDATION_SCRIPT="$SCRIPT_DIR/auto_validation.sh"
+
+# 检查Excel命名规则脚本是否存在
+if [ ! -f "$CHECK_SCRIPT" ]; then
+    echo "错误: 无法找到脚本 $CHECK_SCRIPT"
+    exit 1
+fi
+
+# 执行Excel命名规则检查脚本
+echo "执行Excel命名规则检查..."
+chmod +x "$CHECK_SCRIPT"
+"$CHECK_SCRIPT"
+
+# 存储第一个脚本的退出状态
+EXIT_STATUS=$?
+
+# 如果第一个脚本失败，立即退出
+if [ $EXIT_STATUS -ne 0 ]; then
+    echo "Excel命名规则检查失败，提交被中止。"
+    exit $EXIT_STATUS
+fi
+
+# 检查自动验证脚本是否存在
+if [ ! -f "$VALIDATION_SCRIPT" ]; then
+    echo "错误: 无法找到脚本 $VALIDATION_SCRIPT"
+    exit 1
+fi
+
+# 执行自动验证脚本
+echo "执行配置自动验证..."
+chmod +x "$VALIDATION_SCRIPT"
+"$VALIDATION_SCRIPT"
+
+# 存储第二个脚本的退出状态
+EXIT_STATUS=$?
+
+# 如果验证失败，显示错误信息
+if [ $EXIT_STATUS -ne 0 ]; then
+    echo "配置验证失败，提交被中止。"
+else
+    echo "所有检查通过，提交成功。"
+fi
+
+# 返回最后一个脚本的状态
+exit $EXIT_STATUS

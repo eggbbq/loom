@@ -4,7 +4,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { test } = require('node:test');
 const { load, environment } = require('./address-mapping-harness.cjs');
-const root = path.join(__dirname, '../assets/plugins/address-mapping-watcher/editor');
+const root = path.join(__dirname, '../assets/plugins/loom.address/editor');
 const core = load(path.join(root, 'address-mapping.ts'), {});
 const plain = value => JSON.parse(JSON.stringify(value));
 

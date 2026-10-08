@@ -2,7 +2,7 @@
 
 本仓库专门维护 LayaAir IDE 插件和工程工具。修改前阅读根 README 与对应插件 README；编辑器 API 以 `engine/types/editor.d.ts`、`editor-env.d.ts` 和 `LayaAir.d.ts` 为准。
 
-- 插件源码统一放在 `assets/plugins/<插件名>/`，包名统一为 `loom.kits.<插件名>`。
+- 插件源码统一放在 `assets/plugins/loom.<插件名>/`，包名统一为 `loom.<插件名>`。
 - 每个插件目录直接包含 `package.json`、README 与许可证，构建产物输出至 `release/plugins/`。
 - UI、Scene、Preview 进程分别使用对应 API；Node.js API 只用于 UI/Scene。
 - 保留 `.meta` UUID；重命名脚本时同步移动 `.meta`。

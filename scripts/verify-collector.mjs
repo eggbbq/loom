@@ -4,13 +4,13 @@ import path from 'node:path';
 import { projectFile, projectRoot, run, runLaya } from './laya.mjs';
 
 const plugin = 'manual-atlas-collector';
-const source = path.join(projectRoot, 'assets/plugins', plugin);
+const source = path.join(projectRoot, 'assets/plugins/loom.atlas');
 const manifest = JSON.parse(readFileSync(path.join(source, 'package.json'), 'utf8'));
 let consumer;
 
 try {
     // Always verify a freshly exported package, rather than an old artifact.
-    run(process.execPath, ['scripts/build-plugins.mjs', plugin]);
+    run(process.execPath, ['scripts/build-plugins.mjs', manifest.name]);
     const temp = path.join(projectRoot, 'temp');
     mkdirSync(temp, { recursive: true });
     consumer = mkdtempSync(path.join(temp, 'collector-install-'));

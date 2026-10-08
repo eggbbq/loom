@@ -7,7 +7,7 @@ const vm = require('node:vm');
 
 const consumer = process.argv[2];
 assert.ok(consumer, 'provide the isolated consumer project path');
-const name = 'loom.kits.manual-atlas-collector';
+const name = 'loom.atlas';
 const bundles = path.join(consumer, 'library/packages/build');
 
 async function checkSceneBootstrap() {

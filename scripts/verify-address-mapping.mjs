@@ -3,11 +3,11 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, write
 import path from 'node:path';
 import { projectFile, projectRoot, run, runLaya } from './laya.mjs';
 
-const name = 'loom.kits.address-mapping-watcher';
-const manifest = JSON.parse(readFileSync(path.join(projectRoot, 'assets/plugins/address-mapping-watcher/package.json'), 'utf8'));
+const manifest = JSON.parse(readFileSync(path.join(projectRoot, 'assets/plugins/loom.address/package.json'), 'utf8'));
+const name = manifest.name;
 let consumer;
 try {
-    run(process.execPath, ['scripts/build-plugins.mjs', 'address-mapping-watcher']);
+    run(process.execPath, ['scripts/build-plugins.mjs', 'loom.address']);
     mkdirSync(path.join(projectRoot, 'temp'), { recursive: true });
     consumer = mkdtempSync(path.join(projectRoot, 'temp/address-install-'));
     cpSync(path.join(projectRoot, projectFile), path.join(consumer, 'verify.laya'));

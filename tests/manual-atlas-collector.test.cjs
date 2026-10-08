@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const ts = require('typescript');
 const os = require('node:os');
-const sourceRoot = path.join(__dirname, '../assets/plugins/manual-atlas-collector');
+const sourceRoot = path.join(__dirname, '../assets/plugins/loom.atlas');
 
 function load(file, globals) {
     const { outputText } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {

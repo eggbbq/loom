@@ -1,0 +1,270 @@
+
+import ByteBuf from './bytebuf'
+
+// loom 全局依赖
+type loom = {
+    i18n: { gettext: (key: string) => string },
+    address: { data: Record<string, string> },
+};
+
+function gettext(key: string) {
+    try {
+        const i18n = ((window as any)['loom'] as loom | undefined)?.i18n;
+        if (i18n && i18n.gettext) {
+            return i18n.gettext(key) ?? key;
+        }
+        return key;
+    } catch (error) {
+        console.error(error);
+        return key;
+    }
+}
+
+function getAddress(key: string) {
+    try {
+        const address = ((window as any)['loom'] as loom)?.address;
+        if (address && address.data) {
+            return address.data[key] ?? key;
+        }
+        return key;
+    } catch (error) {
+        console.error(error);
+        return key;
+    }
+}
+
+{{~for enum in __enums~}}
+{{namespace_with_grace_begin enum.namespace}} 
+{{~if enum.comment != '' ~}}
+/**
+ * {{enum.comment | html.escape}}
+ */
+{{~end~}}
+export enum {{enum.name}} {
+    {{~for item in enum.items ~}}
+{{~if item.comment != '' ~}}
+    /**
+     * {{escape_comment item.comment}}
+     */
+{{~end~}}
+    {{item.name}} = {{item.value}},
+    {{~end~}}
+}
+
+{{namespace_with_grace_end enum.namespace}} 
+{{~end~}}
+
+
+{{~
+func get_ref_name 
+    ret (format_property_name __code_style $0.name) + '_ref'
+end
+
+func get_table_property_name
+    name = format_property_name __code_style $0
+    ret (name | string.slice1 0 | string.downcase) + (name | string.slice 1)
+end
+
+func is_address_type
+    ret ($0 | string.equals_ignore_case "string#address")
+end
+
+func generate_resolve_field_ref
+    field = $0
+    fieldName = format_property_name __code_style field.name
+    refTable = get_ref_table field
+    if can_generate_ref field
+        tableName = get_table_property_name refTable.name
+        if field.is_nullable
+            ret 'this.'+(get_ref_name field) + ' = this.' + fieldName + '!= null ? tables.' + tableName + '.get(this.' + fieldName + ') : null'
+        else
+            ret 'this.'+(get_ref_name field) + ' = tables.' + tableName + '.get(this.' + fieldName + ')'
+        end
+    else
+        if (is_field_bean_need_resolve_ref field)
+            ret 'this.'+fieldName + '?.resolve(tables);'
+        else if (is_field_array_like_need_resolve_ref field)
+            ret 'for (let _e of ' + 'this.' + fieldName + ') { _e?.resolve(tables); }'
+        else if (is_field_map_need_resolve_ref field)
+            ret 'for (let [_, _e] of ' + 'this.' + fieldName + ') { _e?.resolve(tables); }'
+        else
+            ret ''
+        end
+    end
+end
+~}}
+
+{{~for bean in __beans~}}
+
+{{namespace_with_grace_begin bean.namespace}}
+{{~if bean.comment != '' ~}}
+/**
+ * {{escape_comment bean.comment}}
+ */
+{{~end~}}
+export {{if bean.is_abstract_type}}abstract {{end}}class {{bean.name}}{{if bean.parent_def_type}} extends {{bean.parent_def_type.full_name}}{{end}} {
+{{~if bean.is_abstract_type~}}
+    static constructorFrom(_buf_: ByteBuf): {{bean.name}}{
+        switch (_buf_.readInt()) {
+        {{~ for child in bean.hierarchy_not_abstract_children~}}
+            case {{child.id}}: return new {{child.full_name}}(_buf_)
+        {{~end~}}
+            default: throw new Error()
+        }
+    }
+{{~end~}}
+
+    constructor(_buf_: ByteBuf) {
+        {{~if bean.parent_def_type~}}
+        super(_buf_)
+        {{~end~}}
+        {{~ for field in bean.export_fields ~}}
+        {{deserialize ('this.' + (((field.type | string.equals_ignore_case "text") || (is_address_type field.type))?"_":"")+(format_property_name __code_style field.name)) '_buf_' field.ctype}}
+        {{~end~}}
+    }
+
+    {{~ for field in bean.export_fields ~}}
+{{~if field.comment != '' ~}}
+    /**
+     * {{escape_comment field.comment}}
+     */
+{{~end~}}
+    {{~ if field.type | string.equals_ignore_case "text" ~}}
+    public get {{format_property_name __code_style (field.name) }} ():{{declaring_type_name field.ctype}} { return gettext(this._{{format_property_name __code_style field.name}});}
+    private readonly _{{format_field_name __code_style field.name}}: {{declaring_type_name field.ctype}}
+    {{~else if is_address_type field.type ~}}
+    public get {{format_property_name __code_style (field.name) }} ():{{declaring_type_name field.ctype}} { return getAddress(this._{{format_property_name __code_style field.name}});}
+    private readonly _{{format_field_name __code_style field.name}}: {{declaring_type_name field.ctype}}
+    {{~else~}}
+    readonly {{format_field_name __code_style field.name}}: {{declaring_type_name field.ctype}}
+    {{~end~}}
+
+
+    {{~if can_generate_ref field~}}
+    {{get_ref_name field}}: {{declaring_type_name (get_ref_type field)}} | undefined
+    {{~end~}}
+    {{~end~}}
+
+    resolve(tables:{{__name}}) {
+        {{~if bean.parent_def_type~}}
+        super.resolve(tables)
+        {{~end~}}
+        {{~ for field in bean.export_fields ~}}
+        {{generate_resolve_field_ref field}}
+        {{~end~}}
+    }
+}
+
+{{namespace_with_grace_end bean.namespace}}
+
+{{~end~}}
+
+{{~for table in __tables
+    key_type = table.key_ttype
+    value_type = table.value_ttype
+~}}
+
+{{namespace_with_grace_begin table.namespace}}
+{{~if table.comment != '' ~}}
+/**
+ * {{escape_comment table.comment}}
+ */
+{{~end~}}
+export class {{table.name}} {
+    {{~if table.is_map_table ~}}
+    private _dataMap: Map<{{declaring_type_name key_type}}, {{declaring_type_name value_type}}>
+    private _dataList: {{declaring_type_name value_type}}[]
+    constructor(_buf_: ByteBuf) {
+        this._dataMap = new Map<{{declaring_type_name key_type}}, {{declaring_type_name value_type}}>()
+        this._dataList = []
+        for(let n = _buf_.readInt(); n > 0; n--) {
+            let _v: {{declaring_type_name value_type}}
+            {{deserialize '_v' '_buf_' value_type}}
+            this._dataList.push(_v)
+            this._dataMap.set(_v.{{format_field_name __code_style table.index_field.name}}, _v)
+        }
+    }
+
+    get dic(): Map<{{declaring_type_name key_type}}, {{declaring_type_name value_type}}> { return this._dataMap; }
+    get arr(): {{declaring_type_name value_type}}[] { return this._dataList; }
+
+    get(key: {{declaring_type_name key_type}}): {{declaring_type_name value_type}} | undefined {
+        return this._dataMap.get(key); 
+    }
+
+    resolve(tables:{{__name}}) {
+        for(let  data of this._dataList)
+        {
+            data.resolve(tables)
+        }
+    }
+    {{~else if table.is_list_table ~}}
+    private _dataList: {{declaring_type_name value_type}}[]
+    
+    constructor(_buf_: ByteBuf) {
+        this._dataList = []
+        for(let n = _buf_.readInt(); n > 0; n--) {
+            let _v: {{declaring_type_name value_type}}
+            {{deserialize '_v' '_buf_' value_type}}
+            this._dataList.push(_v)
+        }
+    }
+
+    arr(): {{declaring_type_name value_type}}[] { return this._dataList }
+    get(index: number): {{declaring_type_name value_type}} | undefined { return this._dataList[index] }
+    
+    resolve(tables:{{__name}}) {
+        for(let  data of this._dataList)
+        {
+            data.resolve(tables)
+        }
+    }
+    {{~else~}}
+
+    private _data: {{declaring_type_name value_type}}
+    constructor(_buf_: ByteBuf) {
+        if (_buf_.readInt() != 1) throw new Error('table mode=one, but size != 1')
+        {{deserialize 'this._data' '_buf_' value_type}}
+    }
+
+    getData(): {{declaring_type_name value_type}} { return this._data; }
+    {{~ for field in value_type.def_bean.hierarchy_export_fields ~}}
+{{~if field.comment != '' ~}}
+    /**
+     * {{escape_comment field.comment}}
+     */
+{{~end~}}
+    get  {{format_field_name __code_style field.name}}(): {{declaring_type_name field.ctype}} { return this._data.{{format_field_name __code_style field.name}}; }
+    {{~if can_generate_ref field~}}
+    get  {{format_field_name __code_style field.name}}_ref(): {{declaring_type_name (get_ref_type field)}} | undefined { return this._data.{{format_field_name __code_style field.name}}_ref; }
+    {{~end~}}
+    {{~end~}}
+
+    resolve(tables:{{__name}}) {
+        this._data.resolve(tables)
+    }
+    {{end}}
+}
+{{namespace_with_grace_end table.namespace}}
+
+{{~end~}}
+
+export class {{__name}} {
+    {{~ for table in __tables ~}}
+    private _{{table.name}}: {{table.full_name}}
+{{~if table.comment != '' ~}}
+    /**
+     * {{escape_comment table.comment}}
+     */
+{{~end~}}
+    get {{get_table_property_name table.name}}(): {{table.full_name}}  { return this._{{table.name}};}
+    {{~end~}}
+
+    static bind(tb:{{__name}}):Record<string, (data: ByteBuf)=>void> {
+        return {
+            {{~for table in __tables ~}}
+            "{{table.output_data_file}}":(data: ByteBuf)=> (tb._{{table.name}} = new {{table.full_name}}(data)).resolve(tb){{if for.last == false}},{{end}}
+            {{~end~}}
+        };
+    }
+}
