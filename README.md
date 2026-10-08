@@ -58,10 +58,9 @@ release/plugins/           生成的安装包，Git 忽略
 
 ## 当前插件
 
-- [Manual Atlas Collector](assets/plugins/loom.atlas/README.md)：手工图集收集器，将所选 `.atlas` 接入编辑器、预览与发布资源索引。
-- [Address Mapping Watcher](assets/plugins/loom.address/README.md)：通过原生资源事件维护短键地址映射，支持多目录配置、CLI 校验和发布收集。
-
-- [Loom I18n](assets/plugins/loom.i18n/README.md)：语言偏好持久化、翻译字典查询与语言对象刷新。
+- [loom.atlas](assets/plugins/loom.atlas/README.md)：将外部或手工制作的 `.atlas` 接入编辑视图、预览与发布，注册子图映射并收集图集及整图资源。
+- [loom.address](assets/plugins/loom.address/README.md)：按资源文件名生成短键地址映射，支持多目录配置、资源事件更新、CLI 校验与发布收集，并提供 `loom.address.load()` 和 `loom.address.data` 运行时 API。
+- [loom.i18n](assets/plugins/loom.i18n/README.md)：提供语言偏好持久化、翻译字典替换与查询，以及语言对象绑定、自动刷新和解除绑定。
 
 ## 许可证
 
