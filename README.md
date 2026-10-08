@@ -27,6 +27,7 @@ Node.js 要求 20 或更新版本。安装官方 LayaAir CLI 后，执行 `layaa
 | `npm run build -- loom.atlas` | 只导出指定插件；仍执行项目检查与测试 |
 | `npm run verify:collector` | 在隔离工程中安装产物，验证实际包入口和资源导出 |
 | `npm run verify:address-mapping` | 在隔离工程中安装产物，验证配置、CLI 与映射资源导出 |
+| `npm run verify:i18n` | 在隔离工程中安装产物，验证翻译服务与 Web 运行时入口 |
 | `npm run build:web` | 构建开发工程的 Web 演示，用于验证资源导出 |
 | `npm run preview` | 启动官方 CLI 预览服务器 |
 
@@ -59,6 +60,8 @@ release/plugins/           生成的安装包，Git 忽略
 
 - [Manual Atlas Collector](assets/plugins/loom.atlas/README.md)：手工图集收集器，将所选 `.atlas` 接入编辑器、预览与发布资源索引。
 - [Address Mapping Watcher](assets/plugins/loom.address/README.md)：通过原生资源事件维护短键地址映射，支持多目录配置、CLI 校验和发布收集。
+
+- [Loom I18n](assets/plugins/loom.i18n/README.md)：语言偏好持久化、翻译字典查询与语言对象刷新。
 
 ## 许可证
 

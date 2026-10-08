@@ -1,0 +1,8 @@
+{
+  "name": "loom.i18n",
+  "displayName": "Loom I18n",
+  "version": "1.0.0",
+  "description": "Runtime translation dictionaries, persistent language preferences and reusable language objects for LayaAir.",
+  "author": "eggbbq",
+  "license": "MIT"
+}
