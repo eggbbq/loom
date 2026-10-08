@@ -4,7 +4,7 @@
 
 ## 开始开发
 
-用 LayaAir IDE 打开 `loom.kits.laya`。插件源码放在 `assets/plugins/loom.<插件名>/`，IDE 会编译并加载注册过的 UI、Scene 和运行时脚本。本项目直接使用源码开发，不再安装同一插件的发行包。
+用 LayaAir IDE 打开 `loom.laya`。插件源码放在 `assets/plugins/loom.<插件名>/`，IDE 会编译并加载注册过的 UI、Scene 和运行时脚本。本项目直接使用源码开发，不再安装同一插件的发行包。
 
 ```sh
 ./build.sh
