@@ -1,4 +1,4 @@
-# loom.kits
+# loom
 
 用于开发、验证和分发 LayaAir IDE 插件与工程工具的独立项目。工程由官方 **3D empty project** 模板创建，当前版本为 **LayaAir 3.4.1**。
 
