@@ -11,14 +11,18 @@ try {
     mkdirSync(path.join(projectRoot, 'temp'), { recursive: true });
     consumer = mkdtempSync(path.join(projectRoot, 'temp/i18n-install-'));
     cpSync(path.join(projectRoot, projectFile), path.join(consumer, 'verify.laya'));
-    cpSync(path.join(projectRoot, 'tsconfig.json'), path.join(consumer, 'tsconfig.json'));
+    const consumerConfig = JSON.parse(readFileSync(path.join(projectRoot, 'tsconfig.json'), 'utf8'));
+    delete consumerConfig.compilerOptions.paths['~/packages/loom.core'];
+    writeFileSync(path.join(consumer, 'tsconfig.json'), JSON.stringify(consumerConfig));
     for (const dir of ['engine', 'settings']) cpSync(path.join(projectRoot, dir), path.join(consumer, dir), { recursive: true });
     mkdirSync(path.join(consumer, 'assets'), { recursive: true });
     mkdirSync(path.join(consumer, 'packages'));
     cpSync(path.join(projectRoot, `release/plugins/${name}-${manifest.version}.layapkg`), path.join(consumer, 'plugin.layapkg'));
     writeFileSync(path.join(consumer, 'packages/manifest.json'), JSON.stringify({ dependencies: { [name]: 'file:../plugin.layapkg' } }));
-    runLaya(['run', '--project', consumer, '--script=InstalledI18nProbe.verify',
-        '--script-file', path.join(projectRoot, 'tests/installed-i18n-probe.ts')]);
+    const probe = runLaya(['run', '--project', consumer, '--script=InstalledI18nProbe.verify',
+        '--script-file', path.join(projectRoot, 'tests/installed-i18n-probe.ts')], { stdio: 'pipe', encoding: 'utf8' });
+    process.stdout.write(probe.stdout); process.stderr.write(probe.stderr);
+    assert.ok(probe.stdout.includes('Installed i18n:'), 'native verification entry must actually execute');
     assert.ok(!existsSync(path.join(consumer, 'assets/plugins')), 'test the installed package without source copies');
     runLaya(['build', 'web', '--project', consumer]);
     run(process.execPath, ['tests/installed-i18n.cjs', consumer]);

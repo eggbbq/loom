@@ -16,7 +16,11 @@
     "list:plugins": "node scripts/build-plugins.mjs --list",
     "verify:collector": "node scripts/verify-collector.mjs",
     "verify:address-mapping": "node scripts/verify-address-mapping.mjs",
-    "verify:i18n": "node scripts/verify-i18n.mjs"
+    "verify:i18n": "node scripts/verify-i18n.mjs",
+    "verify:ui": "node scripts/verify-ui.mjs",
+    "verify:bt": "node scripts/verify-bt.mjs",
+    "verify:core": "node scripts/verify-core.mjs",
+    "verify:pathfinding": "node scripts/verify-pathfinding.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3"

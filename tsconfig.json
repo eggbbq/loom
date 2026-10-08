@@ -13,6 +13,9 @@
     "paths": {
       "~/packages/*": [
         "./library/packages/*"
+      ],
+      "~/packages/loom.core": [
+        "./assets/plugins/loom.core/index.ts"
       ]
     }
   },

@@ -1,0 +1,8 @@
+{
+  "name": "loom.bt",
+  "displayName": "Loom BT",
+  "version": "1.0.0",
+  "description": "Code-driven behavior trees and Laya component runner.",
+  "author": "eggbbq",
+  "license": "MIT"
+}

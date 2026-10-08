@@ -28,6 +28,10 @@ Node.js 要求 20 或更新版本。安装官方 LayaAir CLI 后，执行 `layaa
 | `npm run verify:collector` | 在隔离工程中安装产物，验证实际包入口和资源导出 |
 | `npm run verify:address-mapping` | 在隔离工程中安装产物，验证配置、CLI 与映射资源导出 |
 | `npm run verify:i18n` | 在隔离工程中安装产物，验证翻译服务与 Web 运行时入口 |
+| `npm run verify:ui` | 在隔离工程中安装产物，验证面板导航、缓存、生命周期与提示复用 |
+| `npm run verify:bt` | 验证独立行为树安装、原生组件和发布入口 |
+| `npm run verify:pathfinding` | 验证寻路、动态障碍、平滑、Scene 烘焙及 core 依赖 |
+| `npm run verify:core` | 验证模块、消息、存档、节点扩展、协程及发布入口 |
 | `npm run build:web` | 构建开发工程的 Web 演示，用于验证资源导出 |
 | `npm run preview` | 启动官方 CLI 预览服务器 |
 
@@ -61,6 +65,12 @@ release/plugins/           生成的安装包，Git 忽略
 - [loom.atlas](assets/plugins/loom.atlas/README.md)：将外部或手工制作的 `.atlas` 接入编辑视图、预览与发布，注册子图映射并收集图集及整图资源。
 - [loom.address](assets/plugins/loom.address/README.md)：按资源文件名生成短键地址映射，支持多目录配置、资源事件更新、CLI 校验与发布收集，并提供 `loom.address.load()` 和 `loom.address.data` 运行时 API。
 - [loom.i18n](assets/plugins/loom.i18n/README.md)：提供语言偏好持久化、翻译字典替换与查询，以及语言对象绑定、自动刷新和解除绑定。
+
+- [loom.ui](assets/plugins/loom.ui/README.md)：面板管理、导航、生命周期代理、动画、关闭按钮和可配置提示。
+
+- [loom.bt](assets/plugins/loom.bt/README.md)：代码式行为树、动作生命周期和 Laya 组件驱动。
+- [loom.pathfinding](assets/plugins/loom.pathfinding/README.md)：网格与区块 A*、编辑器烘焙、动态障碍、移动 Agent 和路径平滑；声明依赖 loom.core。
+- [loom.core](assets/plugins/loom.core/README.md)：模块、消息、存档、协程、状态机、网络和原生 Laya 工具。
 
 ## 许可证
 

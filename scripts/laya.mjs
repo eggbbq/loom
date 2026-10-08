@@ -13,7 +13,13 @@ const projectVersion = JSON.parse(readFileSync(path.join(projectRoot, projectFil
 export function run(command, args, options = {}) {
     const result = spawnSync(command, args, { cwd: projectRoot, stdio: 'inherit', ...options });
     if (result.error) throw result.error;
-    if (result.status !== 0) throw new Error(`${path.basename(command)} failed (${result.signal ?? result.status}).`);
+    if (result.status !== 0) {
+        if (options.stdio === 'pipe') {
+            if (result.stdout) process.stdout.write(result.stdout);
+            if (result.stderr) process.stderr.write(result.stderr);
+        }
+        throw new Error(`${path.basename(command)} failed (${result.signal ?? result.status}).`);
+    }
     return result;
 }
 

@@ -1,0 +1,8 @@
+{
+  "name": "loom.core",
+  "displayName": "Loom Core",
+  "version": "1.0.0",
+  "description": "Modules, notifier, archives, coroutines, state machines, network and reusable native Laya utilities.",
+  "author": "eggbbq",
+  "license": "MIT"
+}

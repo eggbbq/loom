@@ -1,0 +1,11 @@
+{
+  "name": "loom.pathfinding",
+  "displayName": "Loom Pathfinding",
+  "version": "1.0.1",
+  "description": "Chunked A* navigation, baking, path smoothing and native Laya agents.",
+  "author": "eggbbq",
+  "license": "MIT",
+  "pluginDependencies": {
+    "loom.core": "1.0.0"
+  }
+}
