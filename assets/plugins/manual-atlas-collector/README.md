@@ -1,6 +1,10 @@
 # Manual Atlas Collector
 
-手工图集收集器。包名：`loom.kits.manual-atlas-collector`，版本：`1.0.1`。将已有 LayaAir `.atlas` 接入编辑器、IDE 预览和发布资源索引，纹理按需加载。
+使用手工制作或外部工具生成的 LayaAir `.atlas` 时，UI 和业务代码通常引用的是子图路径，而这些子图并不是独立的图片文件。要让子图路径在编辑视图、IDE 预览和发布后的游戏中正确解析，需要建立子图到图集的映射，并在发布时收集图集及其整图资源。
+
+Manual Atlas Collector（手工图集收集器）将所选 `.atlas` 接入这三个环节：从图集文件读取子图信息，注册编辑器与预览映射，并写入发布资源索引。只需配置需要使用的图集，无需维护独立子图清单，纹理仍按需加载。
+
+包名：`loom.kits.manual-atlas-collector`，版本：`1.0.1`。
 
 ## 安装与配置
 
@@ -48,10 +52,6 @@ assets/editorResources/manual-atlas-collector/config.json
 ## 演示
 
 本仓库 `assets/examples/manual-atlas-collector/` 提供两个子图的最小示例，开发工程配置选择该图集。执行 `npm run build:web` 后，发布 `fileconfig.json` 应包含两个子图映射。
-
-## 从旧包迁移
-
-此插件由 Mistedge 的 `com.mistedge.manual-atlas` 1.0.2 整理而来。目标项目应先移除旧包，再安装本包，并将旧配置的 `atlases` 列表复制到新配置目录。脚本 UUID 保留原身份，因此不要同时加载新旧包。新包不读取旧的项目配置，也不包含 Mistedge 的图集或配置 UUID。
 
 ## 兼容性与许可证
 
