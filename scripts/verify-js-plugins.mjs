@@ -18,6 +18,12 @@ for (const manifest of selected) {
     let consumer;
     const checks = [];
     try {
+        if (manifest.name === 'loom.tables') {
+            run(process.execPath, ['scripts/verify-tables.mjs', '--skip-build']);
+            results.push({ name: manifest.name, passed: true, checks: ['JS-only installation', 'delayed schema/template generation',
+                'preserved project edits/UUIDs', 'native Scene', 'TypeScript project table declarations', 'native Chromium Preview/Web no-import startup'] });
+            continue;
+        }
         consumer = mkdtempSync(path.join(projectRoot, 'temp/js-install-'));
         mkdirSync(path.join(consumer, 'assets'));
         mkdirSync(path.join(consumer, 'packages'));
@@ -37,6 +43,16 @@ for (const manifest of selected) {
             dependencies[name] = `file:../${name}.layapkg`;
         }
         writeFileSync(path.join(consumer, 'packages/manifest.json'), JSON.stringify({ dependencies }));
+        let migratedConfig;
+        if (['loom.address', 'loom.atlas'].includes(manifest.name)) {
+            const legacyFolder = manifest.name === 'loom.address' ? 'address-mapping-watcher' : 'manual-atlas-collector';
+            const legacy = path.join(consumer, 'assets/editorResources', legacyFolder, 'config.json');
+            const content = manifest.name === 'loom.address' ? '{ "watchDirs": [], "custom": "preserved" }\n' : '{ "atlases": [], "custom": "preserved" }\n';
+            const uuid = manifest.name === 'loom.address' ? '2f790a9a-957a-46ce-a8b3-431f051b9536' : '8954eea7-de2f-4b1a-a5c6-07410f925932';
+            mkdirSync(path.dirname(legacy), { recursive: true });
+            writeFileSync(legacy, content); writeFileSync(legacy + '.meta', JSON.stringify({ uuid }, null, 2));
+            migratedConfig = { legacy, content, uuid, current: path.join(consumer, 'assets/editorResources', manifest.name, 'config.json') };
+        }
         const cli = (method, file, args) => {
             const result = runLaya(['run', '--project', consumer, `--script=${method}`,
                 ...(file ? ['--script-file', file] : []), ...(args ? ['--script-args=' + args] : [])], { stdio: 'pipe', encoding: 'utf8' });
@@ -44,6 +60,12 @@ for (const manifest of selected) {
             return result.stdout;
         };
         cli('JSPackageRegistryProbe.verify', path.join(projectRoot, 'tests/js-package-registry-probe.ts'));
+        if (migratedConfig) {
+            assert.equal(readFileSync(migratedConfig.current, 'utf8'), migratedConfig.content);
+            assert.equal(JSON.parse(readFileSync(migratedConfig.legacy + '.meta')).uuid, migratedConfig.uuid);
+            assert.equal(readFileSync(migratedConfig.legacy, 'utf8'), migratedConfig.content);
+            checks.push('legacy config copied; original asset and UUID retained during imports');
+        }
         assert.ok(!existsSync(path.join(consumer, 'assets/plugins')));
         for (const name of names) {
             const files = walk(path.join(consumer, 'library/packages', name));
@@ -69,7 +91,7 @@ for (const manifest of selected) {
             checks.push('native API/import identity');
         }
         if (manifest.name === 'loom.address') {
-            const configFile = path.join(consumer, 'assets/editorResources/address-mapping-watcher/config.json');
+            const configFile = path.join(consumer, 'assets/editorResources/loom.address/config.json');
             assert.deepEqual(JSON.parse(readFileSync(configFile, 'utf8')).watchDirs, []);
             const settings = JSON.stringify({ watchDirs: ['resources/icons', 'portraits'], extensions: ['png'], debounceMs: 0 });
             writeFileSync(configFile, settings);
@@ -91,7 +113,7 @@ for (const manifest of selected) {
             checks.push('default/preserved config', 'UI menu → Scene runScript', 'CLI generation/check', 'native JSON loader');
         }
         if (manifest.name === 'loom.atlas') {
-            const configFile = path.join(consumer, 'assets/editorResources/manual-atlas-collector/config.json');
+            const configFile = path.join(consumer, 'assets/editorResources/loom.atlas/config.json');
             assert.deepEqual(JSON.parse(readFileSync(configFile, 'utf8')).atlases, []);
             cpSync(path.join(projectRoot, 'assets/examples/manual-atlas-collector'), path.join(consumer, 'assets/examples/manual-atlas-collector'), { recursive: true });
             const settings = JSON.stringify({ atlases: ['examples/manual-atlas-collector/demo.atlas'], retain: true });

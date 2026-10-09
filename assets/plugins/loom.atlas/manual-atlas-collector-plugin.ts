@@ -16,7 +16,7 @@ interface AtlasEntry {
 @IEditorEnv.regClass()
 @IEditorEnv.regBuildPlugin("*")
 export class ManualAtlasCollectorPlugin implements IEditorEnv.IBuildPlugin {
-    private static readonly CONFIG_PATH = "editorResources/manual-atlas-collector/config.json";
+    private static readonly CONFIG_PATH = "editorResources/loom.atlas/config.json";
     private static readonly CONFIG_DOC = [
         "手工图集收集器：将所选 .atlas 接入编辑器、预览和发布流程，纹理按需加载。",
         "atlases 是图集引用数组，支持图集 UUID、res://<图集 UUID> 或相对 assets 的路径。",
@@ -84,6 +84,15 @@ export class ManualAtlasCollectorPlugin implements IEditorEnv.IBuildPlugin {
         const fs = IEditorEnv.require("fs");
         const path = IEditorEnv.require("path");
         const configPath = EditorEnv.assetMgr.toFullPath(this.CONFIG_PATH);
+        if (fs.existsSync(configPath)) return;
+        const legacy = EditorEnv.assetMgr.toFullPath("editorResources/manual-atlas-collector/config.json");
+        if (fs.existsSync(legacy)) {
+            // 旧配置可能仍在本轮导入队列中，保留原文件及 UUID，避免加载钩子移动资源。
+            fs.mkdirSync(path.dirname(configPath), { recursive: true });
+            try { fs.copyFileSync(legacy, configPath, fs.constants.COPYFILE_EXCL); }
+            catch (error) { if ((error as { code?: string }).code !== "EEXIST") throw error; }
+            return;
+        }
         await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
         try {
             await fs.promises.writeFile(configPath, JSON.stringify({ __doc__: this.CONFIG_DOC, atlases: [] }, null, 2) + "\n", { flag: "wx" });

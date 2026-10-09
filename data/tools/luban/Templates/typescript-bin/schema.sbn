@@ -260,6 +260,20 @@ export class {{__name}} {
     get {{get_table_property_name table.name}}(): {{table.full_name}}  { return this._{{table.name}};}
     {{~end~}}
 
+    async load(tableNames?:string[]) {
+        const binder = Tables.bind(loom.tables);
+        for(let k in binder) {
+            if (tableNames && tableNames.indexOf(k) === -1) continue;
+            const address = `resources/tables/${k}.bin`;
+            const resource = await Laya.loader.load(address, Laya.Loader.BUFFER) as Laya.TextResource;
+            try {
+                binder[k](new ByteBuf(new Uint8Array(resource.data)));
+            } finally {
+                Laya.loader.clearRes(address);
+            }
+        }
+    }
+
     static bind(tb:{{__name}}):Record<string, (data: ByteBuf)=>void> {
         return {
             {{~for table in __tables ~}}
@@ -268,3 +282,13 @@ export class {{__name}} {
         };
     }
 }
+
+declare global {
+    interface LoomGlobal {
+        tables: Tables;
+    }
+    var loom: LoomGlobal;
+}
+
+window.loom ??= {} as LoomGlobal;
+window.loom.tables = new Tables();

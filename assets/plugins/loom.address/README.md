@@ -4,9 +4,11 @@
 
 ## 安装与配置
 
-执行 `./build.sh loom.address`，在目标工程的包管理器安装 `release/plugins/loom.address-1.1.2.layapkg`。首次加载自动生成 **`assets/editorResources/address-mapping-watcher/config.json`**；升级、脚本重载和重新安装均保留已有配置。
+执行 `./build.sh loom.address`，在目标工程的包管理器安装 `release/plugins/loom.address-1.1.3.layapkg`。首次加载自动生成 **`assets/editorResources/loom.address/config.json`**；升级、脚本重载和重新安装均保留已有配置。
 
 默认 `watchDirs` 为空，不生成或改写任何映射。通过工具菜单“资源地址映射：配置”打开文件，填入目标工程的目录：
+
+旧项目的 `assets/editorResources/address-mapping-watcher/config.json` 会复制到 `loom.address/config.json`，沿用原配置内容。旧文件及其 `.meta` UUID 保留作为备份，避免在插件加载期间移走正在导入的资源；新位置由 IDE 创建自己的元数据。如果新路径已有配置，则优先使用新配置，不覆盖两边文件。
 
 ```json
 {

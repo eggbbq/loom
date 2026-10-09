@@ -8,6 +8,28 @@ const root = path.join(__dirname, '../assets/plugins/loom.address/editor');
 const core = load(path.join(root, 'address-mapping.ts'), {});
 const plain = value => JSON.parse(JSON.stringify(value));
 
+test('legacy Address settings copy to the new namespace while keeping the old asset available for imports', async () => {
+    const project = fs.mkdtempSync(path.join(os.tmpdir(), 'address-config-migration-'));
+    const env = environment(project);
+    const plugin = load(path.join(root, 'address-mapping-plugin.ts'), env.globals, { './address-mapping': core }).LoomAddressMappingPlugin;
+    const legacy = env.full('editorResources/address-mapping-watcher/config.json');
+    const current = env.full(core.CONFIG_PATH);
+    const content = '{ "watchDirs": [], "custom": "keep" }\n';
+    const meta = '{ "uuid": "legacy-config-id" }\n';
+    try {
+        fs.mkdirSync(path.dirname(legacy), { recursive: true });
+        fs.writeFileSync(legacy, content); fs.writeFileSync(legacy + '.meta', meta);
+        await plugin.onLoad();
+        assert.equal(fs.readFileSync(current, 'utf8'), content);
+        assert.equal(fs.readFileSync(legacy + '.meta', 'utf8'), meta);
+        assert.equal(fs.readFileSync(legacy, 'utf8'), content); plugin.onUnload();
+        fs.mkdirSync(path.dirname(legacy), { recursive: true }); fs.writeFileSync(legacy, '{"watchDirs":[],"old":true}');
+        await plugin.onLoad();
+        assert.equal(fs.readFileSync(current, 'utf8'), content);
+        assert.ok(fs.existsSync(legacy), 'never overwrite an existing new config');
+    } finally { plugin.onUnload(); fs.rmSync(project, { recursive: true, force: true }); }
+});
+
 test('IDE resource imports must not deadlock startup or unload during hot reload', async () => {
     const project = fs.mkdtempSync(path.join(os.tmpdir(), 'address-reload-'));
     const env = environment(project);

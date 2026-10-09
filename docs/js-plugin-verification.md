@@ -28,10 +28,13 @@
 | i18n | 存储、单例身份、字典替换、重复刷新与解绑 |
 | pathfinding | core 依赖与导入身份、固定网格/跨 chunk/负坐标、动态障碍、最近可达、平滑、Scene 烘焙、UI 资源库写入 |
 | ui | 面板导航/缓存/生命周期/提示；Chromium 中真实 Preview/Web prefab UUID 绑定、打开/刷新/关闭 |
+| tables | 仅安装 JS 包后创建项目模板；schema 后生成时创建适配器；自定义模板、UUID 保留、Scene 恢复同一实例；Chromium 中官方 Preview/Web 业务顶层零 import 访问实例 |
 
 每个包另行检查：无实现 TS、UUID 无重复、TypeScript 公开 API 声明能正常编译且拒绝不存在的成员、独立 Web 构建。core/bt/ui 的代表性组件在原生编辑器类型注册表中保留原始 UUID 与描述。
 
 正序和倒序清单中，**Scene、官方 Preview、Web 都在零 import 的业务模块顶层之前提供六个 loom 命名空间**。atlas 不提供 loom.atlas，但参与加载与资源发布。两种浏览器页面均断言全部 runtime.js 在业务 bundle 之前，core 在 pathfinding 之前。真实页面没有脚本重排。类型通过 include 的 index.d.ts 提供。
+
+`tables` 是后加入的项目适配插件，使用独立的 `verify:tables` 验证：包不引用项目 schema，安装后生成的 TS 和 `loadBeforeMain` bundle 将 `Tables` 实例挂到 `loom.tables`；准确的全局类型来自项目适配器。验证使用实际安装包、消费工程生成的表代码和官方脚本加载顺序，不加载表数据。此前七包的正序/倒序验证记录不代表存在 schema 时的 Tables 适配器验证；全量 JS 功能验证另行调用此安装测试。
 
 ## 命令
 

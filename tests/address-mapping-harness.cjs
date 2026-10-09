@@ -34,6 +34,7 @@ exports.environment = function environment(project) {
             once(_delay, owner, fn) { timers.set(fn, owner); }, clear(_owner, fn) { timers.delete(fn); },
         } },
         IEditorEnv: {
+            require: name => require(`node:${name}`),
             regClass: () => type => type, regBuildPlugin: () => type => type, onLoad() {}, onUnload() {}, onUserScriptsLoad() {},
             AssetType: kinds, AssetFlags: flags, AssetChangedFlag: { Modified: 0, New: 1, Deleted: 2, Moved: 3 },
             utils: {
@@ -60,8 +61,8 @@ exports.environment = function environment(project) {
         emit(file, flag, type = kinds.Image) { const asset = assets[file] || { file, type, flags: 0 }; for (const item of sceneListeners) item.fn.call(item.target, asset, flag); },
         async tick() { const pending = [...timers]; timers.clear(); for (const [fn, owner] of pending) fn.call(owner); await env.plugin.queue; },
         async changeConfig(config) {
-            fs.writeFileSync(full('editorResources/address-mapping-watcher/config.json'), JSON.stringify(config));
-            for (const item of uiListeners) item.fn.call(item.target, 'config', 'editorResources/address-mapping-watcher/config.json');
+            fs.writeFileSync(full('editorResources/loom.address/config.json'), JSON.stringify(config));
+            for (const item of uiListeners) item.fn.call(item.target, 'config', 'editorResources/loom.address/config.json');
             await env.plugin.queue;
         },
     };
@@ -72,7 +73,7 @@ exports.environment = function environment(project) {
 // Exercise both sides of this cycle, including an in-flight generation at unload.
 exports.verifyReloadLifecycle = async function verifyReloadLifecycle(env) {
     const plugin = env.plugin, assetMgr = env.globals.EditorEnv.assetMgr;
-    const configPath = env.full('editorResources/address-mapping-watcher/config.json');
+    const configPath = env.full('editorResources/loom.address/config.json');
     const output = env.full('resources/lifecycle.json');
     fs.mkdirSync(path.dirname(configPath), { recursive: true });
     fs.writeFileSync(configPath, JSON.stringify({ watchDirs: ['resources/icons'], output: 'resources/lifecycle.json', debounceMs: 0, runOnStart: true }));

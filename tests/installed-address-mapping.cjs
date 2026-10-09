@@ -34,7 +34,7 @@ async function run() {
         assert.equal(env.globals.window.loom, reloadedHost);
         assert.equal(typeof reloadedHost.address.load, 'function', 'script reload must restore the runtime API');
         assert.ok(reloadedHost.tb);
-        const config = env.full('editorResources/address-mapping-watcher/config.json');
+        const config = env.full('editorResources/loom.address/config.json');
         assert.deepEqual(JSON.parse(fs.readFileSync(config)).watchDirs, []);
         env.register('icons', 0); env.register('icons/apple.png');
         await env.changeConfig({ watchDirs: ['icons'], debounceMs: 0 });

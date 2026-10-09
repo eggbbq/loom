@@ -21,7 +21,7 @@ try {
     const cli = method => runLaya(['run', '--project', consumer, `--script=LoomAddressMappingPlugin.${method}`]);
     cli('runNow');
     assert.ok(!existsSync(path.join(consumer, 'assets/plugins')), 'consumer must load the installed package, without source copies');
-    const config = path.join(consumer, 'assets/editorResources/address-mapping-watcher/config.json');
+    const config = path.join(consumer, 'assets/editorResources/loom.address/config.json');
     assert.deepEqual(JSON.parse(readFileSync(config)).watchDirs, [], 'real package load creates default config');
     const settings = JSON.stringify({ watchDirs: ['resources/icons', 'portraits'], extensions: ['png'], debounceMs: 0 });
     writeFileSync(config, settings);

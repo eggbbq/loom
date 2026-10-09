@@ -417,6 +417,20 @@ export class Tables {
     private _Tbitem: Tbitem
     get tbitem(): Tbitem  { return this._Tbitem;}
 
+    async load(tableNames?:string[]) {
+        const binder = Tables.bind(loom.tables);
+        for(let k in binder) {
+            if (tableNames && tableNames.indexOf(k) === -1) continue;
+            const address = `resources/tables/${k}.bin`;
+            const resource = await Laya.loader.load(address, Laya.Loader.BUFFER) as Laya.TextResource;
+            try {
+                binder[k](new ByteBuf(new Uint8Array(resource.data)));
+            } finally {
+                Laya.loader.clearRes(address);
+            }
+        }
+    }
+
     static bind(tb:Tables):Record<string, (data: ByteBuf)=>void> {
         return {
             "tbconsts":(data: ByteBuf)=> (tb._TbConsts = new TbConsts(data)).resolve(tb),
@@ -424,4 +438,14 @@ export class Tables {
         };
     }
 }
+
+declare global {
+    interface LoomGlobal {
+        tables: Tables;
+    }
+    var loom: LoomGlobal;
+}
+
+window.loom ??= {} as LoomGlobal;
+window.loom.tables = new Tables();
 

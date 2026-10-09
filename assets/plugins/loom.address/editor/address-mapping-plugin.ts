@@ -58,6 +58,15 @@ export class LoomAddressMappingPlugin implements IEditorEnv.IBuildPlugin {
     private static async ensureConfig(): Promise<void> {
         const fullPath = EditorEnv.assetMgr.toFullPath(CONFIG_PATH);
         if (await IEditorEnv.utils.fileExists(fullPath)) return;
+        const fs = IEditorEnv.require("fs"), path = IEditorEnv.require("path");
+        const legacy = EditorEnv.assetMgr.toFullPath("editorResources/address-mapping-watcher/config.json");
+        if (fs.existsSync(legacy)) {
+            // 旧配置可能仍在本轮导入队列中，保留原文件及 UUID，避免加载钩子移动资源。
+            fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+            try { fs.copyFileSync(legacy, fullPath, fs.constants.COPYFILE_EXCL); }
+            catch (error) { if ((error as { code?: string }).code !== "EEXIST") throw error; }
+            return;
+        }
         await EditorEnv.assetMgr.createFolder(CONFIG_PATH.substring(0, CONFIG_PATH.lastIndexOf("/")));
         await IEditorEnv.utils.writeJsonAsync(fullPath, defaultConfig(), 2);
     }

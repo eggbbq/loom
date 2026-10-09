@@ -62,6 +62,7 @@ CLI 3.4.1 的 Happy DOM 会对跨域下载额外发送 OPTIONS 请求，GitHub R
 | `npm run verify:bt` | 验证独立行为树安装、原生组件和发布入口 |
 | `npm run verify:pathfinding` | 验证寻路、动态障碍、平滑、Scene 烘焙及 core 依赖 |
 | `npm run verify:core` | 验证模块、消息、存档、节点扩展、协程及发布入口 |
+| `npm run verify:tables` | 验证安装后生成适配器、项目模板和业务顶层 loom.tables 访问 |
 | `npm run verify:startup` | 验证默认 JS 包正序/倒序下 Scene、官方预览与 Web 的业务顶层零 import 调用 |
 | `npm run verify:remote -- --local --skip-build` | 经本地 HTTP 下载实际安装包，验证远程安装和顶层启动 |
 | `npm run verify:remote -- --skip-build` | 从构建清单中的真实 Release URL 安装并验证 |
@@ -113,6 +114,7 @@ release/plugins/           生成的安装包，Git 忽略
 - [Loom I18n](assets/plugins/loom.i18n/README.md)（`loom.i18n`）：语言偏好持久化、翻译字典替换与查询，以及语言对象绑定、自动刷新和解除绑定。
 - [Loom Pathfinding](assets/plugins/loom.pathfinding/README.md)（`loom.pathfinding`）：网格与区块 A*、编辑器烘焙、动态障碍、移动 Agent 和路径平滑；声明依赖 loom.core。
 - [Loom UI](assets/plugins/loom.ui/README.md)（`loom.ui`）：面板管理、导航、生命周期代理、动画、关闭按钮和可配置提示。
+- [Loom Tables](assets/plugins/loom.tables/README.md)（`loom.tables`）：用包内 `tables.txt` 生成项目适配器，将外部脚本生成的 `Tables` 实例挂载到 `loom.tables`；表数据加载仍由项目负责。该新插件当前使用本地构建包安装，既有 v0.1.1 Release 不包含它。
 
 ## 许可证
 

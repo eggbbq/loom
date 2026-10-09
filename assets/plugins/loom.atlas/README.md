@@ -4,17 +4,19 @@
 
 Loom Atlas（手工图集收集器）将所选 `.atlas` 接入这三个环节：从图集文件读取子图信息，注册编辑器与预览映射，并写入发布资源索引。只需配置需要使用的图集，无需维护独立子图清单，纹理仍按需加载。
 
-包名：`loom.atlas`，版本：`1.0.1`。
+包名：`loom.atlas`，版本：`1.0.2`。
 
 ## 安装与配置
 
-执行 `./build.sh loom.atlas`，在目标项目的包管理器中安装 `release/plugins/loom.atlas-1.0.1.layapkg`。插件首次加载会自动创建：
+执行 `./build.sh loom.atlas`，在目标项目的包管理器中安装 `release/plugins/loom.atlas-1.0.2.layapkg`。插件首次加载会自动创建：
 
 ```text
-assets/editorResources/manual-atlas-collector/config.json
+assets/editorResources/loom.atlas/config.json
 ```
 
 默认配置包含 `__doc__` 使用说明和空的 `atlases` 数组。`__doc__` 仅作说明，不参与图集收集。填入需要接入的图集 UUID 或相对 `assets` 的路径，也兼容 `res://<UUID>`：
+
+旧项目的 `assets/editorResources/manual-atlas-collector/config.json` 会复制到 `loom.atlas/config.json`，沿用原配置内容。旧文件及其 `.meta` UUID 保留作为备份，避免在插件加载期间移走正在导入的资源；新位置由 IDE 创建自己的元数据。如果新路径已有配置，则优先使用新配置，不覆盖两边文件。
 
 ```json
 {
@@ -37,7 +39,7 @@ assets/editorResources/manual-atlas-collector/config.json
 ./build.sh loom.atlas
 ```
 
-产物位于 `release/plugins/loom.atlas-1.0.1.layapkg`。使用 LayaAir CLI 3.4.1 的原生安装包导出；包包含预编译 Runtime/Scene JS、类型声明、资源及 `.meta`。
+产物位于 `release/plugins/loom.atlas-1.0.2.layapkg`。使用 LayaAir CLI 3.4.1 的原生安装包导出；包包含预编译 Runtime/Scene JS、类型声明、资源及 `.meta`。
 
 源码开发时，IDE 自动编译注册的脚本；无需在业务入口中 import。一个工程只保留源码或安装包其中一种接入，避免重复注册。演示和项目配置位于插件目录之外，不进入安装包。
 

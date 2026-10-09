@@ -1,4 +1,4 @@
-export const CONFIG_PATH = "editorResources/address-mapping-watcher/config.json";
+export const CONFIG_PATH = "editorResources/loom.address/config.json";
 
 export interface AddressMappingConfig {
     watchDirs: string[];

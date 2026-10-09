@@ -52,7 +52,7 @@ async function verifyOrder(order, packageNames) {
         process.stdout.write(result.stdout); process.stderr.write(result.stderr);
         assert.ok(result.stdout.includes('PACKAGE_STARTUP_SCENE='));
         assert.ok(!existsSync(path.join(consumer, 'assets/plugins')), 'consumer must use installed packages only');
-        assert.ok(existsSync(path.join(consumer, 'assets/editorResources/address-mapping-watcher/config.json')), 'installed address must still create its editor configuration');
+        assert.ok(existsSync(path.join(consumer, 'assets/editorResources/loom.address/config.json')), 'installed address must still create its editor configuration');
         const scene = JSON.parse(result.stdout.match(/^PACKAGE_STARTUP_SCENE=(.+)$/m)[1]);
         run(process.execPath, ['node_modules/typescript/bin/tsc', '--noEmit', '--pretty', 'false', '--project', consumer]);
         runLaya(['build', 'web', '--project', consumer]);

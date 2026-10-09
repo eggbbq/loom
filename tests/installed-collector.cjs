@@ -13,7 +13,7 @@ const bundles = path.join(consumer, 'library/packages/build');
 async function checkSceneBootstrap() {
     const file = path.join(bundles, `${name}.scene.js`);
     const projectPath = fs.mkdtempSync(path.join(os.tmpdir(), 'collector-bootstrap-'));
-    const configPath = path.join(projectPath, 'assets/editorResources/manual-atlas-collector/config.json');
+    const configPath = path.join(projectPath, 'assets/editorResources/loom.atlas/config.json');
     let onLoad;
     let onUnload;
     vm.runInNewContext(fs.readFileSync(file, 'utf8'), {

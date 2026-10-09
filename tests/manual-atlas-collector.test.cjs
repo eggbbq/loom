@@ -43,7 +43,7 @@ const { ManualAtlasCollectorPlugin: Plugin } = load(path.join(sourceRoot, 'manua
         AssetType: { Atlas: 'atlas', Image: 'image' }, AssetExportConfigType: { Atlas: 1 },
         require: name => {
             if (name === 'fs') return { promises: { mkdir: async () => {}, rename: async () => {} }, existsSync: file => {
-                assert.equal(file, 'editorResources/manual-atlas-collector/config.json');
+                assert.equal(file, 'editorResources/loom.atlas/config.json');
                 return configExists;
             } };
             assert.equal(name, 'path');
@@ -70,7 +70,7 @@ const plain = value => JSON.parse(JSON.stringify(value));
 
 async function checkConfigInitialization() {
     const projectPath = fs.mkdtempSync(path.join(os.tmpdir(), 'manual-atlas-config-'));
-    const configPath = path.join(projectPath, 'assets/editorResources/manual-atlas-collector/config.json');
+    const configPath = path.join(projectPath, 'assets/editorResources/loom.atlas/config.json');
     const { ManualAtlasCollectorPlugin: InstalledPlugin } = load(path.join(sourceRoot, 'manual-atlas-collector-plugin.ts'), {
         require: () => previewModule,
         Laya: { timer: { clear() {} } },
@@ -102,6 +102,19 @@ async function checkConfigInitialization() {
         await InstalledPlugin.onLoad();
         assert.equal(fs.readFileSync(configPath, 'utf8'), existing, 'reloading/upgrading must preserve existing config bytes');
         await InstalledPlugin.onUnload();
+        fs.rmSync(configPath);
+        const legacy = path.join(projectPath, 'assets/editorResources/manual-atlas-collector/config.json');
+        fs.mkdirSync(path.dirname(legacy), { recursive: true });
+        const legacyMeta = '{ "uuid": "legacy-atlas-config" }\n';
+        fs.writeFileSync(legacy, existing); fs.writeFileSync(legacy + '.meta', legacyMeta);
+        await InstalledPlugin.ensureProjectConfig();
+        assert.equal(fs.readFileSync(configPath, 'utf8'), existing, 'legacy config must migrate without resetting atlas selection');
+        assert.equal(fs.readFileSync(legacy + '.meta', 'utf8'), legacyMeta, 'preserve original config UUID');
+        assert.equal(fs.readFileSync(legacy, 'utf8'), existing, 'do not remove an asset while IDE imports may be using it');
+        fs.writeFileSync(legacy, '{"atlases":[],"old":true}');
+        await InstalledPlugin.ensureProjectConfig();
+        assert.equal(fs.readFileSync(configPath, 'utf8'), existing, 'existing new config takes priority');
+        fs.rmSync(legacy);
         fs.rmSync(configPath);
         await Promise.all([InstalledPlugin.ensureProjectConfig(), InstalledPlugin.ensureProjectConfig()]);
         assert.deepEqual(JSON.parse(fs.readFileSync(configPath, 'utf8')), created, 'concurrent initialization must safely create one documented config');

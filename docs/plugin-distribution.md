@@ -18,7 +18,7 @@
 
 已经执行过 `npm ci` 时，可以使用 `npm run build` 或 `npm run build -- loom.bt`。`npm run build:js` 是默认构建的同义命令。Node.js 要求 20 或更新版本，官方 LayaAir CLI 使用 3.4.1。
 
-包管理器显示名称统一使用 `Loom Address`、`Loom Atlas`、`Loom BT`、`Loom Core`、`Loom I18n`、`Loom Pathfinding`、`Loom UI`。程序包标识仍为 `loom.address` 等；Address 和 Atlas 的配置目录分别保留 `assets/editorResources/address-mapping-watcher/` 与 `assets/editorResources/manual-atlas-collector/`。首次加载创建缺失的默认配置，重载和升级保留已有配置。
+包管理器显示名称统一使用 `Loom Address`、`Loom Atlas`、`Loom BT`、`Loom Core`、`Loom I18n`、`Loom Pathfinding`、`Loom Tables`、`Loom UI`。程序包标识仍为 `loom.address` 等；项目配置目录与包名一致，例如 `assets/editorResources/loom.address/`、`loom.atlas/`、`loom.tables/`。首次加载创建缺失的默认配置，重载和升级保留已有配置；Address 和 Atlas 会将旧配置复制到新目录，旧文件及 UUID 保留为备份，新路径已有配置时不覆盖。
 
 ## 远程安装与发布
 
@@ -118,6 +118,8 @@ Preview 和 Web 先加载 Laya 引擎，再加载插件 Runtime JS，最后执�
 
 API 挂载完成后，资源加载和业务服务初始化仍由项目安排。例如在引擎初始化后调用 `await loom.address.load()`，再把结果交给需要地址数据的服务；UI 预制体、翻译字典和导航数据也按项目流程加载。
 
+`loom.tables` 连接消费工程生成的 schema，采用项目适配器：Scene 插件从 `tables.txt` 生成 `src/loom/tables.ts`，配套 `tables.bundledef` 设置 `loadBeforeMain`，在业务 bundle 前挂载 `Tables` 实例。包本身不包含项目表结构，API 类型由生成的 TS 提供。安装时 schema 尚不存在会等待外部生成；数据加载仍由项目安排。项目模板与手工修改的适配器保留，详见 [Loom Tables](../assets/plugins/loom.tables/README.md)。
+
 ## build 目录分别做什么
 
 安装包内容示意：
@@ -143,7 +145,8 @@ loom.<name>/
 ## 验证与源码版
 
 ```sh
-npm run verify:js -- --skip-build          # 七个 JS 包的独立安装与功能
+npm run verify:js -- --skip-build          # 所有 JS 包的独立安装与功能
+npm run verify:tables -- --skip-build     # 安装包生成适配器及主脚本前挂载
 npm run verify:startup -- --skip-build     # 正序/倒序顶层访问
 npm run verify:remote -- --local --skip-build # 发布前：本地 HTTP 下载与安装
 npm run verify:remote -- --skip-build      # 发布后：真实 Release 下载与安装
