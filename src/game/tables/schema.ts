@@ -418,7 +418,7 @@ export class Tables {
     get tbitem(): Tbitem  { return this._Tbitem;}
 
     async load(tableNames?:string[]) {
-        const binder = Tables.bind(loom.tables);
+        const binder = Tables.bind(this);
         for(let k in binder) {
             if (tableNames && tableNames.indexOf(k) === -1) continue;
             const address = `resources/tables/${k}.bin`;

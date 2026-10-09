@@ -261,7 +261,7 @@ export class {{__name}} {
     {{~end~}}
 
     async load(tableNames?:string[]) {
-        const binder = Tables.bind(loom.tables);
+        const binder = Tables.bind(this);
         for(let k in binder) {
             if (tableNames && tableNames.indexOf(k) === -1) continue;
             const address = `resources/tables/${k}.bin`;
