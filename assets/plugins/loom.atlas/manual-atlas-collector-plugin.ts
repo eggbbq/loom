@@ -57,6 +57,8 @@ export class ManualAtlasCollectorPlugin implements IEditorEnv.IBuildPlugin {
     }
 
     async onCollectAssets(task: IEditorEnv.IBuildTask, assets: Set<IEditorEnv.IAssetInfo>): Promise<void> {
+        const entry = EditorEnv.assetMgr.getAsset("6fbeb86f-2e39-49d3-a401-079230ffd738");
+        if (entry) assets.add(entry);
         this.entries = await ManualAtlasCollectorPlugin.readEntries();
         for (const entry of this.entries) {
             assets.add(entry.asset);

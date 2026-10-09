@@ -1,5 +1,5 @@
 import { AddressMappingConfig, CONFIG_PATH, collectMapping, defaultConfig, parseConfig, within } from "./address-mapping";
-import "../runtime/address-mapping-runtime";
+import "../index";
 
 /** Scene 进程：资源数据库、原生文件工具、CLI 和发布共用同一条生成链路。 */
 @IEditorEnv.regClass()
@@ -120,6 +120,8 @@ export class LoomAddressMappingPlugin implements IEditorEnv.IBuildPlugin {
     async onStart(): Promise<void> { await LoomAddressMappingPlugin.runNow(); }
 
     async onCollectAssets(_task: IEditorEnv.IBuildTask, assets: Set<IEditorEnv.IAssetInfo>): Promise<void> {
+        const entry = EditorEnv.assetMgr.getAsset("6b1623aa-6a04-40ff-a21c-c9d9a8a12fae");
+        if (entry) assets.add(entry);
         const config = LoomAddressMappingPlugin.config;
         if (!config?.watchDirs.length) return;
         const result = collectMapping(config, LoomAddressMappingPlugin.sources());

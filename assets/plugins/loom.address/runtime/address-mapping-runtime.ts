@@ -1,5 +1,4 @@
-/** 注册安装包运行时入口，并提供 loom.address.load。 */
-@Laya.regClass()
+/** 地址映射运行时实现；由模块 index.ts 挂载 loom.address。 */
 export class LoomAddressMappingRuntime {
     /** 加载并展开映射，完成后释放 JSON 资源。 */
     static async load(address: string = "resources/address.json"): Promise<Record<string, string>> {
@@ -35,19 +34,12 @@ export class LoomAddressMappingRuntime {
         return addresses;
     }
 
-    private static install(): void {
+    static install(): void {
         window.loom ??= {} as LoomGlobal;
         window.loom.address = { load: LoomAddressMappingRuntime.load, data: undefined };
     }
 
-    static {
-        // 全部脚本加载后挂载，保留工程随后创建的 loom 框架对象。
-        Laya.addBeforeInitCallback(LoomAddressMappingRuntime.install);
-        // Scene 首次加载和业务脚本重载后恢复 API。
-        if (typeof IEditorEnv !== "undefined") {
-            IEditorEnv.onUserScriptsLoad(LoomAddressMappingRuntime, "install");
-        }
-    }
+
 }
 
 declare global {

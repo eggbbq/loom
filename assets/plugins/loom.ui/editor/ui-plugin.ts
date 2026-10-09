@@ -3,7 +3,7 @@
 @IEditorEnv.regBuildPlugin("*")
 export class LoomUIPlugin implements IEditorEnv.IBuildPlugin {
     onCollectAssets(_task: IEditorEnv.IBuildTask, assets: Set<IEditorEnv.IAssetInfo>): void {
-        const asset = EditorEnv.assetMgr.getAsset("ed3b6a7c-65eb-44ae-9cd0-fbb4e295220a");
+        const asset = EditorEnv.assetMgr.getAsset("b82b660b-de69-4a88-bf69-e34db634fd76");
         if (!asset) throw new Error("[LoomUI] Missing runtime entry");
         assets.add(asset);
     }

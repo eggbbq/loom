@@ -7,7 +7,8 @@ test('i18n preserves language preferences, replaces dictionaries and releases la
     const storage = new Map();
     const callbacks = [];
     let reload;
-    const window = {};
+    const host = { framework: {}, address: {} };
+    const window = { loom: host };
     const globals = {
         window,
         Laya: {
@@ -20,9 +21,10 @@ test('i18n preserves language preferences, replaces dictionaries and releases la
     const root = path.join(__dirname, '../assets/plugins/loom.i18n/runtime');
     const { I18n } = load(path.join(root, 'I18n.ts'), globals);
     const { LangBase } = load(path.join(root, 'lang-base.ts'), globals, { './I18n': { I18n } });
-    assert.equal(window.loom, undefined, 'allow the host framework to load before installing the namespace');
-    const host = { framework: {}, address: {} };
-    window.loom = host;
+    load(path.join(root, '../index.ts'), globals, {
+        './runtime/I18n': { I18n }, './runtime/lang-base': { LangBase },
+    });
+    assert.equal(window.loom.i18n, I18n.inst, 'module entry mounts before engine initialization');
     callbacks.forEach(fn => fn());
     assert.equal(window.loom, host);
     assert.ok(host.address);

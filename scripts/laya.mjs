@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
@@ -23,7 +23,7 @@ export function run(command, args, options = {}) {
     return result;
 }
 
-function resolveCli() {
+export function resolveCli() {
     const name = process.platform === 'win32' ? 'layaair.cmd' : 'layaair';
     const candidates = process.env.LAYAAIR_CLI ? [process.env.LAYAAIR_CLI] : [
         ...String(process.env.PATH ?? '').split(path.delimiter).filter(Boolean).map(dir => path.join(dir, name)),
@@ -42,7 +42,12 @@ function resolveCli() {
 
 export function runLaya(args, options = {}) {
     const { command, prefix } = resolveCli();
-    return run(command, [...prefix, `--version=${projectVersion}`, ...args], options);
+    return run(command, [...prefix, `--version=${projectVersion}`, ...args], { ...options, env: cliEnvironment(options.env) });
+}
+
+function cliEnvironment(env = process.env) {
+    const preload = new URL('./laya-cli-package-http.mjs', import.meta.url).href;
+    return { ...env, NODE_OPTIONS: `${env.NODE_OPTIONS ?? ''} --import=${preload}`.trim() };
 }
 
 export function requirePackageExport() {
@@ -52,11 +57,38 @@ export function requirePackageExport() {
     }
 }
 
+export async function startPreview(projectPath) {
+    const { command, prefix } = resolveCli();
+    const child = spawn(command, [...prefix, `--version=${projectVersion}`, 'run', '--project', projectPath], {
+        cwd: projectRoot, env: cliEnvironment(), detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    const stop = () => {
+        if (child.exitCode !== null) return;
+        try { if (process.platform === 'win32') child.kill(); else process.kill(-child.pid, 'SIGTERM'); } catch {}
+    };
+    try {
+        const url = await new Promise((resolve, reject) => {
+            let output = '';
+            const timeout = setTimeout(() => reject(new Error('Official preview server startup timed out')), 45000);
+            const append = chunk => {
+                output += chunk;
+                const match = output.match(/HTTP:\s+http:\/\/[^/]+:(\d+)\//);
+                if (match) { clearTimeout(timeout); resolve(`http://127.0.0.1:${match[1]}/`); }
+            };
+            child.stdout.on('data', append); child.stderr.on('data', append);
+            child.on('error', error => { clearTimeout(timeout); reject(error); });
+            child.on('exit', code => { clearTimeout(timeout); reject(new Error(`Preview server exited (${code}): ${output}`)); });
+        });
+        return { url, stop };
+    } catch (error) { stop(); throw error; }
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
     try {
         const args = process.argv.slice(2);
         if (!args.length) throw new Error('Usage: node scripts/laya.mjs <command> [...args]');
-        runLaya([...args, '--project', projectRoot, '--skip-package-install']);
+        const hasProject = args.some(arg => /^(?:--project|-p)(?:=|$)/.test(arg));
+        runLaya([...args, ...(hasProject ? [] : ['--project', projectRoot, '--skip-package-install'])]);
     } catch (error) {
         console.error(error.message);
         process.exitCode = 1;

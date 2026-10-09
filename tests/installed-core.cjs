@@ -23,7 +23,7 @@ for (const [file, scene] of [['library/packages/build/loom.core.scene.js', true]
     assert.ok(host.core, 'core must be ready before business class/token initialization');
     assert.equal(callbacks.length, 1); callbacks[0]();
     const api = host.core;
-    for (const name of ['ModuleBase', 'ModuleScope', 'ModuleManager', 'moduleToken', 'mods', 'Notifier', 'msg', 'ArchiveSystem', 'UserArchiveSyncData', 'CoroutineRunner', 'CoroutineComponent', 'WaitForSeconds', 'CameraRef', 'StateManagerComponent', 'gpool', 'Http', 'HttpError', 'RPCChannel', 'mathf', 'uif', 'formatf', 'arrayf', 'uuidV4']) assert.ok(api[name], `missing ${name}`);
+    for (const name of ['ModuleBase', 'ModuleScope', 'ModuleManager', 'moduleToken', 'mods', 'Notifier', 'msg', 'ArchiveSystem', 'UserArchiveSyncData', 'CoroutineRunner', 'CoroutineComponent', 'WaitForSeconds', 'CameraRef', 'StateManagerComponent', 'pool', 'Http', 'HttpError', 'RPCChannel', 'mathf', 'uif', 'formatf', 'arrayf', 'uuidV4']) assert.ok(api[name], `missing ${name}`);
     assert.equal(api.moduleToken('same-token'), 'same-token');
     assert.equal(ctx.format, api.formatf);
     const node = new Node(); node.setData('hello'); assert.equal(node._data, 'hello'); assert.deepEqual(node.lastEvent, ['setData', 'hello']);

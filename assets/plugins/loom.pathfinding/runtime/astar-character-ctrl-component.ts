@@ -1,5 +1,4 @@
 import { AstarAgentComponent } from "./astar-agent-component";
-import type {} from "~/packages/loom.core";
 
 const { regClass, property } = Laya;
 

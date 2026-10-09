@@ -1,8 +1,12 @@
-import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { projectRoot, requirePackageExport, run, runLaya } from './laya.mjs';
 
 const pluginsRoot = path.join(projectRoot, 'assets/plugins');
+const outputArgs = process.argv.slice(2).filter(arg => arg.startsWith('--output-dir='));
+if (outputArgs.length > 1) throw new Error('Specify --output-dir only once.');
+const outputRoot = path.resolve(projectRoot, outputArgs[0]?.slice('--output-dir='.length) ?? 'release/plugins/source');
+if (!outputRoot.startsWith(path.resolve(projectRoot) + path.sep)) throw new Error('Source package output must be inside the project.');
 
 function discoverPlugins() {
     return readdirSync(pluginsRoot, { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => {
@@ -11,13 +15,13 @@ function discoverPlugins() {
         if (!/^[a-z0-9][a-z0-9.-]*$/.test(manifest.name) || !/^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/i.test(manifest.version)) {
             throw new Error(`Invalid package name/version in ${entry.name}/package.json.`);
         }
-        const output = `release/plugins/${manifest.name}-${manifest.version}.layapkg`;
-        return { id: entry.name, manifest, source: `assets/plugins/${entry.name}`, output };
+        const output = path.relative(projectRoot, path.join(outputRoot, `${manifest.name}-${manifest.version}.layapkg`));
+        return { id: manifest.name, manifest, source: `assets/plugins/${entry.name}`, output };
     }).sort((a, b) => a.id.localeCompare(b.id));
 }
 
 try {
-    const args = process.argv.slice(2);
+    const args = process.argv.slice(2).filter(arg => !arg.startsWith('--output-dir='));
     const plugins = discoverPlugins();
     const names = new Set();
     for (const plugin of plugins) {
@@ -36,14 +40,26 @@ try {
         run(process.execPath, ['node_modules/typescript/bin/tsc', '--noEmit', '--pretty', 'false']);
         const tests = readdirSync(path.join(projectRoot, 'tests')).filter(name => name.endsWith('.test.cjs'));
         if (tests.length) run(process.execPath, ['--test', ...tests.map(name => `tests/${name}`)]);
-        mkdirSync(path.join(projectRoot, 'release/plugins'), { recursive: true });
+        mkdirSync(outputRoot, { recursive: true });
         for (const plugin of selected) {
             const output = path.join(projectRoot, plugin.output);
             rmSync(output, { force: true });
             console.log(`Exporting ${plugin.manifest.name}@${plugin.manifest.version}...`);
             try {
-                runLaya(['export-installable-package', plugin.source, '--output', plugin.output,
-                    '--project', projectRoot, '--skip-package-install']);
+                // Stage dependency declarations without changing package source or asset UUIDs.
+                mkdirSync(path.join(projectRoot, 'temp'), { recursive: true });
+                const staging = mkdtempSync(path.join(projectRoot, 'temp/plugin-export-'));
+                try {
+                    const folder = path.join(staging, plugin.manifest.name);
+                    cpSync(path.join(projectRoot, plugin.source), folder, { recursive: true });
+                    for (const dependency of Object.keys(plugin.manifest.pluginDependencies ?? {})) {
+                        appendFileSync(path.join(folder, 'index.ts'), `\nimport type {} from ${JSON.stringify('~/packages/' + dependency)};\n`);
+                    }
+                    runLaya(['export-installable-package', path.relative(projectRoot, folder), '--output', plugin.output,
+                        '--project', projectRoot, '--skip-package-install']);
+                } finally {
+                    rmSync(staging, { recursive: true, force: true });
+                }
                 if (!statSync(output).size) throw new Error(`Empty package: ${plugin.output}`);
             } catch (error) {
                 rmSync(output, { force: true });

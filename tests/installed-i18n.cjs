@@ -10,7 +10,8 @@ function check(file, scene) {
     const reloads = [];
     const classes = {};
     const storage = new Map();
-    const window = { __setBundle_: (name, exports) => { assert.equal(name, 'loom.i18n'); Object.assign(classes, exports); } };
+    const host = { framework: {}, i18n: {}, address: {}, tb: {} };
+    const window = { loom: host, __setBundle_: (name, exports) => { assert.equal(name, 'loom.i18n'); Object.assign(classes, exports); } };
     const context = {
         window, console,
         Laya: {
@@ -23,9 +24,7 @@ function check(file, scene) {
         onUserScriptsLoad: (target, key) => reloads.push(() => target[key]()),
     };
     vm.runInNewContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
-    assert.equal(window.loom, undefined);
-    const host = { framework: {}, address: {}, tb: {} };
-    window.loom = host;
+    assert.ok(window.loom.i18n, 'I18n must mount during module evaluation');
     assert.equal(callbacks.length, 1);
     callbacks[0]();
     assert.equal(window.loom, host);

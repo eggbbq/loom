@@ -12,13 +12,12 @@ try {
     consumer = mkdtempSync(path.join(projectRoot, 'temp/pathfinding-install-'));
     cpSync(path.join(projectRoot, projectFile), path.join(consumer, 'verify.laya'));
     const consumerConfig = JSON.parse(readFileSync(path.join(projectRoot, 'tsconfig.json'), 'utf8'));
-    delete consumerConfig.compilerOptions.paths['~/packages/loom.core'];
     writeFileSync(path.join(consumer, 'tsconfig.json'), JSON.stringify(consumerConfig));
     for (const dir of ['engine', 'settings']) cpSync(path.join(projectRoot, dir), path.join(consumer, dir), { recursive: true });
     mkdirSync(path.join(consumer, 'assets'), { recursive: true });
     mkdirSync(path.join(consumer, 'packages'));
-    cpSync(path.join(projectRoot, `release/plugins/${name}-${manifest.version}.layapkg`), path.join(consumer, 'plugin.layapkg'));
-    cpSync(path.join(projectRoot, 'release/plugins/loom.core-1.0.0.layapkg'), path.join(consumer, 'core.layapkg'));
+    cpSync(path.join(projectRoot, `release/plugins/source/${name}-${manifest.version}.layapkg`), path.join(consumer, 'plugin.layapkg'));
+    cpSync(path.join(projectRoot, 'release/plugins/source/loom.core-1.0.0.layapkg'), path.join(consumer, 'core.layapkg'));
     writeFileSync(path.join(consumer, 'packages/manifest.json'), JSON.stringify({ dependencies: { [name]: 'file:../plugin.layapkg', 'loom.core': 'file:../core.layapkg' } }));
     const probe = runLaya(['run', '--project', consumer, '--script=InstalledPathfindingProbe.verify',
         '--script-file', path.join(projectRoot, 'tests/installed-pathfinding-probe.ts')], { stdio: 'pipe', encoding: 'utf8' });

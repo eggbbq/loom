@@ -5,7 +5,8 @@ const vm = require('node:vm');
 const consumer = process.argv[2];
 for (const [file, scene] of [['library/packages/build/loom.ui.scene.js', true], ['library/packages/build/loom.ui.js', false], ['release/web/js/bundle.js', false]]) {
     const callbacks = [], reloads = [], exports = {};
-    const window = { __setBundle_: (name, values) => Object.assign(exports, values) };
+    const host = { framework: {}, i18n: {}, address: {}, tb: {} };
+    const window = { loom: host, __setBundle_: (name, values) => Object.assign(exports, values) };
     const ctx = { window, console, setTimeout, clearTimeout, Laya: {
         Script: class {}, GWidget: class {}, regClass: () => type => type,
         property: () => () => {}, runInEditor: type => type,
@@ -16,9 +17,7 @@ for (const [file, scene] of [['library/packages/build/loom.ui.scene.js', true], 
         onUserScriptsLoad: (type, key) => reloads.push(() => type[key]()),
     };
     vm.runInNewContext(fs.readFileSync(path.join(consumer, file), 'utf8'), ctx, { filename: file });
-    assert.equal(window.loom, undefined, 'defer registration until framework is ready');
-    const host = { framework: {}, i18n: {}, address: {} };
-    window.loom = host;
+    assert.ok(window.loom.ui, 'UI must mount during module evaluation');
     assert.equal(callbacks.length, 1);
     callbacks[0]();
     assert.equal(window.loom, host);

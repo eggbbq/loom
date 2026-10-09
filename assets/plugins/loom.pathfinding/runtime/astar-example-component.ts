@@ -1,7 +1,6 @@
 import { AstarAgentComponent, AstarAgentEvent } from "./astar-agent-component";
 
 import type { AstarBakeData } from "./astar-bake-component";
-import type {} from "~/packages/loom.core";
 import { astar } from "./astar-chunk-component";
 
 const { regClass, property } = Laya;

@@ -10,7 +10,8 @@ test('runtime loads and expands mappings, preserves special keys and releases th
     const cleared = [];
     let requested;
     let initialize;
-    const window = {};
+    const existing = { framework: {}, tb: {} };
+    const window = { loom: existing };
     const globals = {
         window,
         Laya: {
@@ -24,9 +25,8 @@ test('runtime loads and expands mappings, preserves special keys and releases th
     };
     const runtimeDir = path.join(__dirname, '../assets/plugins/loom.address/runtime');
     const runtime = load(path.join(runtimeDir, 'address-mapping-runtime.ts'), globals);
-    assert.equal(window.loom, undefined, 'package evaluation must allow the host to load its loom framework first');
-    const existing = { framework: {}, tb: {} };
-    window.loom = existing;
+    load(path.join(runtimeDir, '../index.ts'), globals, { './runtime/address-mapping-runtime': runtime });
+    assert.equal(typeof window.loom.address.load, 'function', 'module entry mounts before engine initialization');
     initialize();
     assert.equal(window.loom, existing); assert.ok(existing.framework); assert.ok(existing.tb);
     assert.equal('kits' in window.loom, false, 'API must use loom.address directly');

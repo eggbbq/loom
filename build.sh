@@ -11,4 +11,5 @@ fi
 
 # Install the locked development dependencies, including when NODE_ENV=production.
 npm ci --include=dev
+# The default build exports precompiled JS + declarations as installable packages.
 npm run build -- "$@"

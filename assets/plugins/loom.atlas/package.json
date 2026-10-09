@@ -1,6 +1,6 @@
 {
   "name": "loom.atlas",
-  "displayName": "Manual Atlas Collector",
+  "displayName": "Loom Atlas",
   "version": "1.0.1",
   "description": "Integrate external LayaAir atlases with the editor, preview and build pipeline.",
   "author": "eggbbq",

@@ -1,20 +1,20 @@
 # 临时向量池
 
-`loom.core.gpool` 提供 `Vector2` 和 `Vector3` 的轻量复用。每种对象池由独立类实现，`gpool` 只保存实例入口。
+`loom.core.pool` 提供 `Vector2` 和 `Vector3` 的轻量复用。每种对象池由独立类实现，`pool` 只保存实例入口。
 
 ```ts
-const offset = loom.core.gpool.v3.rent(target.x - origin.x, 0, target.z - origin.z);
+const offset = loom.core.pool.v3.rent(target.x - origin.x, 0, target.z - origin.z);
 try {
     // 在当前同步调用中使用 offset
 } finally {
-    loom.core.gpool.v3.release(offset);
+    loom.core.pool.v3.release(offset);
 }
 ```
 
-- `gpool.v2.rent(x?, y?)`、`gpool.v3.rent(x?, y?, z?)`：取得向量。省略的坐标为 `0`；复用时也会覆盖全部坐标。
-- `gpool.v2.release(value)`、`gpool.v3.release(value)`：归还对应类型的向量。归还不清零，下次借出时才写入坐标。
+- `pool.v2.rent(x?, y?)`、`pool.v3.rent(x?, y?, z?)`：取得向量。省略的坐标为 `0`；复用时也会覆盖全部坐标。
+- `pool.v2.release(value)`、`pool.v3.release(value)`：归还对应类型的向量。归还不清零，下次借出时才写入坐标。
 - 开发构建只检查同一个对象是否已在该池中；直接重复归还时打印错误并跳过本次归还。发布构建跳过检查。当前未压缩的 Laya 发布产物仍保留 `if (false)` 代码块，因此“跳过”不等于从文件中彻底移除。
-- 增加其他临时数据类型时，为该类型编写独立的池类，并在 `gpool` 中增加一个实例入口。
+- 增加其他临时数据类型时，为该类型编写独立的池类，并在 `pool` 中增加一个实例入口。
 - 每次取得必须恰好归还一次；归还后不得再读写或保存引用。不要归还 `new` 出来的持久向量或 Laya 内部持有的向量。
 - 对象被归还又重新借出后，旧引用和新借用指向同一个对象；现有 API 无法区分这两次借用。
 - 不要把借用的向量交给会长期保存引用的对象，也不要跨 `await` 持有。组件长期使用的向量应创建一次并作为字段复用。

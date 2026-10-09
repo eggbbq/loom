@@ -1,7 +1,6 @@
 import type { ITranslate } from "./types";
 
-/** Laya 原生多语言服务；注册类确保安装包导出运行时入口。 */
-@Laya.regClass()
+/** Laya 原生多语言服务；模块入口负责挂载全局 API。 */
 export class I18n {
     static readonly inst = new I18n();
     private _textMap: Record<string, string> = Object.create(null);
@@ -35,17 +34,9 @@ export class I18n {
         return () => { this._targets.delete(target); };
     }
 
-    private static install(): void {
+    static install(): void {
         window.loom ??= {} as LoomGlobal;
         window.loom.i18n = I18n.inst;
-    }
-
-    static {
-        // 等工程框架脚本加载完成后挂载，避免抢占 loom bundle 的全局名。
-        Laya.addBeforeInitCallback(I18n.install);
-        if (typeof IEditorEnv !== "undefined") {
-            IEditorEnv.onUserScriptsLoad(I18n, "install");
-        }
     }
 }
 

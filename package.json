@@ -4,23 +4,42 @@
   "private": true,
   "description": "LayaAir editor plugins and development tools.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eggbbq/loom.git"
+  },
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "check": "tsc --noEmit --pretty false",
     "test": "node --test tests/*.test.cjs",
-    "build": "node scripts/build-plugins.mjs",
+    "build": "node scripts/build-js-plugins.mjs",
+    "release": "node scripts/release-plugins.mjs",
     "build:web": "node scripts/laya.mjs build web",
     "preview": "node scripts/laya.mjs run",
     "list:plugins": "node scripts/build-plugins.mjs --list",
-    "verify:collector": "node scripts/verify-collector.mjs",
-    "verify:address-mapping": "node scripts/verify-address-mapping.mjs",
-    "verify:i18n": "node scripts/verify-i18n.mjs",
-    "verify:ui": "node scripts/verify-ui.mjs",
-    "verify:bt": "node scripts/verify-bt.mjs",
-    "verify:core": "node scripts/verify-core.mjs",
-    "verify:pathfinding": "node scripts/verify-pathfinding.mjs"
+    "verify:collector": "node scripts/verify-js-plugins.mjs loom.atlas",
+    "verify:address-mapping": "node scripts/verify-js-plugins.mjs loom.address",
+    "verify:i18n": "node scripts/verify-js-plugins.mjs loom.i18n",
+    "verify:ui": "node scripts/verify-js-plugins.mjs loom.ui",
+    "verify:bt": "node scripts/verify-js-plugins.mjs loom.bt",
+    "verify:core": "node scripts/verify-js-plugins.mjs loom.core",
+    "verify:pathfinding": "node scripts/verify-js-plugins.mjs loom.pathfinding",
+    "verify:startup": "node scripts/verify-package-startup.mjs --js",
+    "verify:remote": "node scripts/verify-remote-plugins.mjs",
+    "build:js": "node scripts/build-js-plugins.mjs",
+    "verify:js": "node scripts/verify-js-plugins.mjs",
+    "verify:js:startup": "node scripts/verify-package-startup.mjs --js",
+    "build:source": "node scripts/build-plugins.mjs",
+    "verify:source:collector": "node scripts/verify-collector.mjs",
+    "verify:source:address-mapping": "node scripts/verify-address-mapping.mjs",
+    "verify:source:i18n": "node scripts/verify-i18n.mjs",
+    "verify:source:ui": "node scripts/verify-ui.mjs",
+    "verify:source:bt": "node scripts/verify-bt.mjs",
+    "verify:source:core": "node scripts/verify-core.mjs",
+    "verify:source:pathfinding": "node scripts/verify-pathfinding.mjs",
+    "verify:source:startup": "node scripts/verify-package-startup.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3"

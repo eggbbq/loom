@@ -11,20 +11,14 @@ export * from "./ui-utils";
 
 import { UIManager } from "./ui-manager";
 
-/** 安装包运行时入口；UI 层级和资源在首次使用时创建。 */
-@Laya.regClass()
+/** UI 运行时实现；UI 层级和资源在首次使用时创建。 */
 export class LoomUIRuntime {
-    private static install(): void {
+    static install(): void {
         window.loom ??= {} as LoomGlobal;
         window.loom.ui = UIManager.inst;
     }
 
-    static {
-        Laya.addBeforeInitCallback(LoomUIRuntime.install);
-        if (typeof IEditorEnv !== "undefined") {
-            IEditorEnv.onUserScriptsLoad(LoomUIRuntime, "install");
-        }
-    }
+
 }
 
 declare global {

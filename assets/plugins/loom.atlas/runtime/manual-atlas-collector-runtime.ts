@@ -6,8 +6,7 @@ interface AtlasPreviewEntry {
     };
 }
 
-/** regClass 使安装包编译器将此文件识别为运行时入口，同时提供 Scene 进程的直接注册接口。 */
-@Laya.regClass()
+/** 图集运行时实现；由模块入口加载，同时供 Scene 插件直接调用。 */
 export class ManualAtlasCollectorRuntime {
     static register(entries: AtlasPreviewEntry[]): void {
         for (const { url, description } of entries) {

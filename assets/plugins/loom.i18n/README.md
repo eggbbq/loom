@@ -4,7 +4,7 @@
 
 ## 安装与使用
 
-执行 `./build.sh loom.i18n`，通过目标工程包管理器安装 `release/plugins/loom.i18n-1.0.0.layapkg`。保留运行时源码，不使用仅导出 UI/Scene 的 `precompile`。
+执行 `./build.sh loom.i18n`，通过目标工程包管理器安装 `release/plugins/loom.i18n-1.0.0.layapkg`。安装包包含 Runtime/Scene JS 与 `.d.ts`，分别提供执行代码和类型提示。
 
 ```ts
 loom.i18n.lang = "zh";
@@ -35,11 +35,11 @@ unbind(); // 所属模块停止时解除绑定
 
 ## 运行时与类型
 
-`editor/i18n-plugin.ts` 在原生 `onCollectAssets` 中收集两个运行时脚本，确保仅使用全局 API、没有运行时 import 的消费工程也能发布服务。该钩子不创建配置、不扫描游戏文案。
+`editor/i18n-plugin.ts` 在原生 `onCollectAssets` 中收集模块入口，确保仅使用全局 API、没有运行时 import 的消费工程也能发布服务。该钩子不创建配置、不扫描游戏文案。
 
-`runtime/I18n.ts` 和 `runtime/lang-base.ts` 使用 `@Laya.regClass()`，确保安装包生成运行时入口。插件在 Laya 初始化回调中扩展最终的 loom 框架对象，Scene 在用户脚本加载/重载后恢复服务；保留其他 loom 成员。调用全局 API 应在引擎初始化后进行；定义 Lang 子类时使用包导入，避免依赖尚未安装的全局对象。
+`index.ts` 显式加载 `I18n` 和 `LangBase`，立即将 `I18n.inst` 挂载到 `loom.i18n`。运行时类不需要注册装饰器；Scene 用户脚本加载/重载后恢复同一服务实例，保留其他 loom 成员。
 
-TypeScript 通过包的 `index.ts` 提供导出与全局声明。在工程已有全局声明中使用 `import type {} from "~/packages/loom.i18n"` 即可包含插件类型；框架自身通过 `LoomGlobal` 接口合并 API，并声明 `var loom: LoomGlobal`。首次安装后如编辑器保留旧缓存，重启 TypeScript 服务。
+TypeScript 通过包的 `index.d.ts` 提供导出与全局声明；也可以在工程 `tsconfig.json` 的 `include` 中追加 `"./library/packages/*/index.d.ts"`，不在业务脚本中导入。在工程已有全局声明中使用 `import type {} from "~/packages/loom.i18n"` 即可包含插件类型；框架自身通过 `LoomGlobal` 接口合并 API，并声明 `var loom: LoomGlobal`。首次安装后如编辑器保留旧缓存，重启 TypeScript 服务。
 
 旧代码里的自动汇总各模块语言定义、自动加载 UI/配置字典和预制体文本适配尚未实现，本插件不增加这些流程。没有编辑器设置或菜单，因此无需创建 editorResources 配置。
 
@@ -48,3 +48,5 @@ TypeScript 通过包的 `index.ts` 提供导出与全局声明。在工程已有
 `npm test` 验证字典替换、键回退、持久化、反复翻译、绑定释放和框架对象保留。`npm run verify:i18n` 在没有插件源码副本的消费工程安装真实产物，验证 Scene API、包导入实例身份与 Web 发布入口。
 
 MIT，见 LICENSE。
+
+默认构建输出预编译 JS、`.d.ts` 与资源的独立 `.layapkg`。Runtime JS 在业务脚本之前自动加载；Scene 在用户脚本加载/重载后恢复挂载。类型配置可在 `tsconfig.json` 的 `include` 中追加 `"./library/packages/*/index.d.ts"`。构建结构、依赖顺序和源码版选择见仓库的 [安装与构建指南](../../../docs/plugin-distribution.md)，实际验证见 [JS 安装包验证](../../../docs/js-plugin-verification.md)。

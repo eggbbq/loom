@@ -20,7 +20,7 @@ try {
     cpSync(path.join(projectRoot, 'assets/examples'), path.join(consumer, 'assets/examples'), { recursive: true });
     cpSync(path.join(projectRoot, 'assets/editorResources'), path.join(consumer, 'assets/editorResources'), { recursive: true });
     mkdirSync(path.join(consumer, 'packages'));
-    cpSync(path.join(projectRoot, `release/plugins/${manifest.name}-${manifest.version}.layapkg`), path.join(consumer, 'plugin.layapkg'));
+    cpSync(path.join(projectRoot, `release/plugins/source/${manifest.name}-${manifest.version}.layapkg`), path.join(consumer, 'plugin.layapkg'));
     writeFileSync(path.join(consumer, 'packages/manifest.json'), JSON.stringify({
         dependencies: { [manifest.name]: 'file:../plugin.layapkg' },
     }, null, 2));

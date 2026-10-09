@@ -1,11 +1,11 @@
-import { ModuleBase, ModuleManager, ModuleScope, moduleToken, Notifier, msg, ArchiveSystem, CoroutineRunner, WaitForSeconds, gpool, CameraRef, Http } from "~/packages/loom.core";
+import { ModuleBase, ModuleManager, ModuleScope, moduleToken, Notifier, msg, ArchiveSystem, CoroutineRunner, WaitForSeconds, pool, CameraRef, Http } from "~/packages/loom.core";
 
 function check(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
 
 @IEditorEnv.regClass()
 export class InstalledCoreProbe {
     static async verify(): Promise<void> {
-        check(loom.core.ModuleBase === ModuleBase && loom.core.CameraRef === CameraRef && loom.core.gpool === gpool, "Core class or singleton identity differs");
+        check(loom.core.ModuleBase === ModuleBase && loom.core.CameraRef === CameraRef && loom.core.pool === pool, "Core class or singleton identity differs");
         const calls: string[] = [];
         const token = moduleToken<{ name: string }>("probe:core");
         class Probe extends ModuleBase {
@@ -35,9 +35,9 @@ export class InstalledCoreProbe {
         node.setData("value");
         check(node._data === "value" && data === "value", "Native Node extension/event failed");
         node.destroy();
-        const vector = gpool.v3.rent(1, 2, 3); gpool.v3.release(vector);
-        check(gpool.v3.rent(4, 5, 6) === vector && vector.x === 4 && vector.z === 6, "Native vector pool failed");
-        gpool.v3.release(vector);
+        const vector = pool.v3.rent(1, 2, 3); pool.v3.release(vector);
+        check(pool.v3.rent(4, 5, 6) === vector && vector.x === 4 && vector.z === 6, "Native vector pool failed");
+        pool.v3.release(vector);
         const archive = new ArchiveSystem(); archive.setUserId("loom-core-probe");
         const key = "loom-core-probe:value", saved = Laya.LocalStorage.getItem(key), version = Laya.LocalStorage.getItem(key + ".version");
         try {

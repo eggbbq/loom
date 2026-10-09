@@ -1,6 +1,6 @@
-# loom.bt
+# Loom BT
 
-独立 LayaAir 3.4.1 插件；保留原行为树节点、组件 UUID 和算法语义。通过包入口导入，或使用 `loom.bt.BTBuilder`、`loom.bt.BTRunner`、`loom.bt.BTStatus` 等公开 API。无需其他插件；安装不生成项目配置。注册入口自动挂载，构建插件保证全局调用进入 Web 发布。
+独立 LayaAir 3.4.1 插件；保留原行为树节点、组件 UUID 和算法语义。通过包入口导入，或使用 `loom.bt.BTBuilder`、`loom.bt.BTRunner`、`loom.bt.BTStatus` 等公开 API。无需其他插件；安装不生成项目配置。模块入口立即挂载，构建插件保证全局调用进入 Web 发布。
 
 构建 `./build.sh loom.bt`，安装验证 `npm run verify:bt`。
 
@@ -442,3 +442,5 @@ class EnemyAI {
 4. 移动、动画、计时器等需要清理的 Action 应实现 `abort`。
 5. Context 中保存角色组件和共享状态，不要在节点之间互相引用。
 6. 行为树负责决策；移动、动画和攻击的具体实现仍放在对应角色组件中。
+
+默认构建输出预编译 JS、`.d.ts` 与资源的独立 `.layapkg`。Runtime JS 在业务脚本之前自动加载；Scene 在用户脚本加载/重载后恢复挂载。类型配置可在 `tsconfig.json` 的 `include` 中追加 `"./library/packages/*/index.d.ts"`。构建结构、依赖顺序和源码版选择见仓库的 [安装与构建指南](../../../docs/plugin-distribution.md)，实际验证见 [JS 安装包验证](../../../docs/js-plugin-verification.md)。

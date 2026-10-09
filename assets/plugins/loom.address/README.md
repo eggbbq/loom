@@ -1,6 +1,6 @@
-# Address Mapping Watcher
+# Loom Address
 
-标准 LayaAir 3.4.1 插件，包名 `loom.address`。以资源文件名作为短键，生成地址映射，并提供运行时加载 API。无需 Python、npm 运行时依赖或外部文件观察器。安装包保留编辑器和运行时源码，以便 IDE 注册 CLI 类方法并生成 Preview/发布入口。
+标准 LayaAir 3.4.1 插件，包名 `loom.address`。以资源文件名作为短键，生成地址映射，并提供运行时加载 API。无需 Python、npm 运行时依赖或外部文件观察器。安装包包含预编译的编辑器与运行时 JS 及类型声明，保留 CLI 注册名、组件 UUID 和 Preview/发布入口。
 
 ## 安装与配置
 
@@ -40,7 +40,7 @@ const apple = addresses.apple; // resources/icons/apple.png
 
 方法签名为 `loom.address.load(address = "resources/address.json"): Promise<Record<string, string>>`。输出路径可作为参数传入，例如 `await loom.address.load("data/icons.json")`；运行时不读取编辑器配置。加载与解析完成后释放 JSON 资源，返回展开后的字典，并将同一字典保存到 `loom.address.data`，供后续插件直接读取、复用已加载的数据；首次加载前 `data` 为 `undefined`。不调用 `setGetAddress`，不预加载字典中的图片。无效映射或索引使 Promise 拒绝，保留上一次成功加载的数据；空 `$path` 返回空字典。调用方可保存返回值或读取 `data`，自行执行 `addresses[key] ?? key` 等回退。
 
-运行时由 `address-mapping-runtime.ts` 中的单个类完成入口注册、全局挂载、加载与解析；业务代码无需手动导入，直接使用 `loom.address.load()`。解析和安装方法为类内部实现，全局 API 包含加载方法 `load` 和最近一次加载结果 `data`。插件在 Laya 初始化之前自动扩展全局 `loom.address`，保留已有 loom 框架及其他成员；Scene 进程在脚本加载后注册，并在脚本重载后恢复命名空间。加载方法应在引擎初始化后使用。TypeScript 通过本文件夹的 `runtime/address-mapping-runtime.ts` 提供全局声明；已有 loom 框架使用 `interface LoomGlobal extends LoomApi {}` 合并自己的 API 类型，避免重复声明全局 loom 变量。
+源码入口 `index.ts` 负责全局挂载与重载恢复；`runtime/address-mapping-runtime.ts` 中的类负责加载与解析。安装包由 `loom.address.runtime.js` 执行挂载，业务顶层可访问 API；加载资源的 `loom.address.load()` 应在引擎初始化后调用。全局 API 包含加载方法 `load` 和最近一次加载结果 `data`。挂载保留已有 loom 框架及其他成员；Scene 进程在脚本加载后注册，并在脚本重载后恢复命名空间。安装包的 `index.d.ts` 引用运行时声明；已有 loom 框架可使用 `interface LoomGlobal extends LoomApi {}` 合并自己的 API 类型，避免重复声明全局 loom 变量。
 
 ## CLI 与发布
 
@@ -53,17 +53,19 @@ layaair --version=3.4.1 run -p /path/to/project --script=LoomAddressMappingPlugi
 
 `check` 仅检查映射数据是否一致，不修改输出；过期时返回非零退出码。CLI 加载不会自动生成映射，因此校验不会被启动写入掩盖。首次执行仍会创建缺失的项目配置。发布钩子在资源收集之前更新输出，并把映射与匹配资源加入导出集合，支持观察 `resources` 之外的资源目录。项目自身的导出路径变更、压缩、分包规则仍应与运行时加载协议兼容。
 
-当前 CLI 3.4.1 在部分新消费工程中使用 `--skip-package-install` 会丢失包资源根并报告 `getAllAssetsInDir(null)` 编译错误；省略该选项走正常包协调可避免。纯预编译包也未正确暴露本插件的 CLI 类方法，因此此包保留源码。这些行为已通过真实安装验证，插件不修改 IDE 的缓存或内部实现。
+当前 CLI 3.4.1 在部分新消费工程中使用 `--skip-package-install` 会丢失包资源根并报告 `getAllAssetsInDir(null)` 编译错误；省略该选项走正常包协调可避免。当前 JS 分发流程保留官方编译器的类注册名，已实际验证预编译后的 CLI 方法及 UI 到 Scene 的调用。
 
-## 进程与事件
+## 源码进程分工与事件
 
 - `address-mapping-plugin.ts`：Scene 注册、加载/卸载生命周期、`assetMgr.onAssetChanged`、`Laya.timer` 合并事件、串行生成、CLI 与发布钩子。所有路径通过 `assetMgr.toFullPath` 转成绝对路径；读写使用 `IEditorEnv.utils` 和资源数据库。
 - `address-mapping-editor.ts`：UI 原生菜单与中英文翻译；用 `assetDb.onAssetChanged` 监听配置并通过 `Editor.scene.runScript` 转发。`editorResources` 不保证存在于 Scene 资源库，因此两个进程分别观察。
 - `editor/address-mapping.ts`：共用配置校验与映射算法，不注册运行时入口。
-- `runtime/address-mapping-runtime.ts`：单个 `@Laya.regClass()` 注册类负责运行时入口、全局 API 挂载与重载恢复，以及原生 Loader 加载和映射展开，供 Preview 与发布中的业务脚本调用。
+- `runtime/address-mapping-runtime.ts`：实现全局 API 安装、原生 Loader 加载和映射展开，由 `index.ts` 显式调用安装并处理重载恢复，供 Preview 与发布中的业务脚本调用。
 
 移动事件不提供旧路径，因此任意资源移动都会重新扫描，覆盖资源移出观察目录和父目录重命名。卸载移除监听、清理计时器并等待已开始的生成。输出事件被过滤，不会递归触发生成。
 
 测试：`npm test`；安装验证：`npm run verify:address-mapping`。测试和演示资源不随插件分发。
 
 MIT，见 LICENSE。
+
+默认构建输出预编译 JS、`.d.ts` 与资源的独立 `.layapkg`。Runtime JS 在业务脚本之前自动加载；Scene 在用户脚本加载/重载后恢复挂载。类型配置可在 `tsconfig.json` 的 `include` 中追加 `"./library/packages/*/index.d.ts"`。构建结构、依赖顺序和源码版选择见仓库的 [安装与构建指南](../../../docs/plugin-distribution.md)，实际验证见 [JS 安装包验证](../../../docs/js-plugin-verification.md)。

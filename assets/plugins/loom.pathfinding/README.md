@@ -1,4 +1,4 @@
-# loom.pathfinding
+# Loom Pathfinding
 
 LayaAir 3.4.1 标准安装包，保留原组件 UUID、算法、烘焙格式和运行时导航行为。包入口 `~/packages/loom.pathfinding` 导出全部 API，全局入口为 `loom.pathfinding`。
 
@@ -308,8 +308,8 @@ const cellCenterWorldZ = (gridY + 0.5) * tileSize;
 确保 Astar 已初始化、起点和目标附近的 chunk 已加载，然后设置世界坐标目标：
 
 ```ts
-import { AstarAgentComponent } from "./astar-agent-component";
-import { AstarCharacterCtrlComponent } from "./astar-character-ctrl-component";
+import { AstarAgentComponent } from "~/packages/loom.pathfinding";
+import { AstarCharacterCtrlComponent } from "~/packages/loom.pathfinding";
 
 const agent = role.getComponent(AstarAgentComponent);
 if (!agent) throw new Error("AstarAgentComponent is missing");
@@ -423,7 +423,7 @@ import {
     AstarAgentComponent,
     AstarAgentEvent,
     type AstarAgentEventData,
-} from "./astar-agent-component";
+} from "~/packages/loom.pathfinding";
 
 const { regClass } = Laya;
 
@@ -524,3 +524,5 @@ maxVisibleChunks  = 64
 - 起点位于阻挡格或局部窗口之外时，寻路会失败。终点被阻挡或不连通且未开启 `findNearestReachable` 时也会失败。
 - 当前局部窗口是有界搜索，不等同于全世界寻路。
 - 路径平滑、动态障碍和 chunk 生命周期发生变化时，业务层应根据需要重新请求路径。
+
+默认构建输出预编译 JS、`.d.ts` 与资源的独立 `.layapkg`。Runtime JS 在业务脚本之前自动加载；Scene 在用户脚本加载/重载后恢复挂载。类型配置可在 `tsconfig.json` 的 `include` 中追加 `"./library/packages/*/index.d.ts"`。构建结构、依赖顺序和源码版选择见仓库的 [安装与构建指南](../../../docs/plugin-distribution.md)，实际验证见 [JS 安装包验证](../../../docs/js-plugin-verification.md)。

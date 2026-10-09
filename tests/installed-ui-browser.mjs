@@ -5,6 +5,8 @@ import { existsSync, readFileSync, mkdtempSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
 const consumer = process.argv[2];
+const jsMode = process.argv.includes('--js');
+const runtimePath = jsMode ? '/library/packages/loom.ui/loom.ui.runtime.js' : '/library/packages/build/loom.ui.js';
 const chrome = process.env.CHROME_BIN ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 assert.ok(existsSync(chrome), 'set CHROME_BIN to a Chromium executable for native UI browser verification');
 const panel = 'b0c345c4-9c3a-4c6a-883b-f6b19d06102f';
@@ -12,7 +14,7 @@ const compress = id => Buffer.from(id.replaceAll('-', ''), 'hex').toString('base
 const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>
 ${['laya.core', 'laya.d3', 'laya.webgl_2D', 'laya.webgl_3D', 'laya.ui2'].map(name => `<script src="/release/web/libs/${name}.js"></script>`).join('\n')}
 <script>window.__setBundle_=(_name,api)=>window.uiAPI=api;</script>
-<script src="/library/packages/build/loom.ui.js"></script>
+<script src="${runtimePath}"></script>
 <script>
 (async () => {
  const check=(value,message)=>{if(!value)throw Error(message)};
@@ -39,7 +41,7 @@ ${['laya.core', 'laya.d3', 'laya.webgl_2D', 'laya.webgl_3D', 'laya.ui2'].map(nam
 const fixture = JSON.stringify({ _$ver: 1, _$id: 'fixture', _$type: 'GWidget', name: 'Panel', width: 100, height: 100,
     _$comp: [{ _$type: panel, scriptPath: '~/packages/loom.ui/runtime/ui-panel.ts', anim: 0, center: false, life: 1 }] });
 const server = createServer((req, res) => {
-    if (req.url.startsWith('/native-ui.html')) { res.setHeader('Content-Type', 'text/html'); res.end(req.url.includes('published') ? html.replace('/library/packages/build/loom.ui.js', '/release/web/js/bundle.js').replaceAll(panel, compress(panel)).replaceAll('32cdfef6-44bf-4a87-8225-1fb11b3c85a4', compress('32cdfef6-44bf-4a87-8225-1fb11b3c85a4')).replaceAll('/fixtures/Panel.lh', '/release/web/resources/Panel.lh') : html); return; }
+    if (req.url.startsWith('/native-ui.html')) { res.setHeader('Content-Type', 'text/html'); res.end(req.url.includes('published') ? html.replace(runtimePath, jsMode ? '/release/web/js/loom.ui.runtime.js' : '/release/web/js/bundle.js').replaceAll(panel, compress(panel)).replaceAll('32cdfef6-44bf-4a87-8225-1fb11b3c85a4', compress('32cdfef6-44bf-4a87-8225-1fb11b3c85a4')).replaceAll('/fixtures/Panel.lh', '/release/web/resources/Panel.lh') : html); return; }
     if (req.url === '/fixtures/Panel.lh') { res.setHeader('Content-Type', 'application/json'); res.end(fixture); return; }
     const file = path.resolve(consumer, '.' + new URL(req.url, 'http://local').pathname);
     if (!file.startsWith(path.resolve(consumer) + path.sep) || !existsSync(file)) { res.statusCode = 404; res.end(); return; }
