@@ -21,7 +21,7 @@
 
 | 插件 | 原生安装后的功能检查 |
 | --- | --- |
-| address | 默认配置创建、保留已有配置、UI 菜单调用 Scene、CLI 生成/校验、过期检测、原生 JSON 加载、映射与资源发布 |
+| address | 默认配置创建、保留已有配置、UI 菜单调用 Scene、CLI 生成/校验、过期检测、原生 JSON 加载、映射与资源发布；安装后资源导入期间的加载/卸载回归 |
 | atlas | 默认配置创建与保留、Scene 图集注册、图集/整图/fileconfig 发布 |
 | bt | 所有公开类、原生组件、等待/上下文/重置、选择器抢占、并行中止 |
 | core | Scope/token 生命周期、消息请求、Node 扩展、存档、对象池、协程取消、HTTP 公开 API |
@@ -45,7 +45,15 @@ npm run verify:startup -- --skip-build
 
 单插件验证可执行 `npm run verify:pathfinding -- --skip-build` 等命令，结果文件名为 `js-plugin-functions-loom.pathfinding.json`。`npm run verify:js:startup` 保留为默认启动验证的同义命令。
 
-另外建立了 `/Users/graylian/workspace/loom-js-demo`，七个包使用本地相对路径安装，业务 TS 无插件 import，提供真实资源、图集、BT/A*、Core、I18n 和 UI 交互。
+另外建立了 `/Users/graylian/workspace/loom-js-demo`，七个包通过 GitHub Release 下载直链安装，业务 TS 无插件 import，提供真实资源、图集、BT/A*、Core、I18n 和 UI 交互。
+
+## IDE 内预览与热重载
+
+2026-10-09 在 LayaAir IDE 3.4.1 的实际窗口中复现了旧版 Address 在资源导入/包重载期间阻塞预览的问题：资源导入等待插件 `onLoad` 返回，`onLoad` 又等待 `assetMgr.flushChanges()` 完成。CLI 不执行 IDE 的启动生成，因此先前的 CLI Preview/Web 检查没有覆盖这一情况。
+
+`loom.address` 1.1.2 将启动生成延后到生命周期钩子返回以后执行；卸载不等待依赖当前导入的旧任务，并通过加载轮次取消旧任务。回归同时检查源码和实际安装的 Scene JS：旧版会超时，新版加载/卸载返回，旧任务取消，新一轮继续生成。
+
+Demo 在 IDE 内完成播放、原生“重新载入所有插件”后再次播放，并实际点击验证了 BT/A* 移动、计数保存、语言切换、UIPanel 加载/刷新/关闭以及图片/图集显示。此项与 CLI 启动验证分别记录，不以 CLI 的通过结果代替 IDE 内预览。
 
 ## 范围
 

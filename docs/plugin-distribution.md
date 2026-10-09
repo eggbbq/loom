@@ -22,14 +22,14 @@
 
 ## 远程安装与发布
 
-GitHub 仓库保存源码，GitHub Releases 附件保存构建后的 `.layapkg`。消费工程通过 HTTP(S) 下载直链安装，保持独立插件管理。当前默认 Release 标签为仓库版本 `v0.1.0`；插件自己的版本仍分别取自各插件 `package.json`。
+GitHub 仓库保存源码，GitHub Releases 附件保存构建后的 `.layapkg`。消费工程通过 HTTP(S) 下载直链安装，保持独立插件管理。当前默认 Release 标签为仓库版本 `v0.1.1`；插件自己的版本仍分别取自各插件 `package.json`。
 
 将生成的 `release/plugins/manifest.json` 的依赖项合并到游戏工程的 `packages/manifest.json`，保留已有依赖。只安装 BT 的例子：
 
 ```json
 {
   "dependencies": {
-    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.1.0/loom.bt-1.0.0.layapkg"
+    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.1.1/loom.bt-1.0.0.layapkg"
   }
 }
 ```

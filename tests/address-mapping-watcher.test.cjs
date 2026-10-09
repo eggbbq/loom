@@ -3,10 +3,18 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { test } = require('node:test');
-const { load, environment } = require('./address-mapping-harness.cjs');
+const { load, environment, verifyReloadLifecycle } = require('./address-mapping-harness.cjs');
 const root = path.join(__dirname, '../assets/plugins/loom.address/editor');
 const core = load(path.join(root, 'address-mapping.ts'), {});
 const plain = value => JSON.parse(JSON.stringify(value));
+
+test('IDE resource imports must not deadlock startup or unload during hot reload', async () => {
+    const project = fs.mkdtempSync(path.join(os.tmpdir(), 'address-reload-'));
+    const env = environment(project);
+    env.plugin = load(path.join(root, 'address-mapping-plugin.ts'), env.globals, { './address-mapping': core }).LoomAddressMappingPlugin;
+    try { await verifyReloadLifecycle(env); }
+    finally { fs.rmSync(project, { recursive: true, force: true }); }
+});
 
 test('protocol, directory order, overlap, hidden files, output exclusion and unsafe keys', () => {
     const config = core.parseConfig({ watchDirs: ['assets/resources/b', 'resources/a', 'resources/b/nested'], extensions: ['PNG', '.jpg'] });

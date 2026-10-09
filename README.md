@@ -18,19 +18,19 @@ Node.js 要求 20 或更新版本。安装官方 LayaAir CLI 后，执行 `layaa
 
 执行 `npm run build`，在目标工程的包管理器中分别安装需要的 `release/plugins/loom.<插件名>-<版本>.layapkg`。插件之间通过 `pluginDependencies` 声明真实依赖，不使用统一的 `loom.bundledef` 或源码复制入口。
 
-构建同时生成 `release/plugins/manifest.json`（远程安装 URL）、`distribution.json`（各插件版本与校验值）和 `SHA256SUMS`。默认下载地址为本仓库 GitHub Releases 的 `v0.1.0`；可用 `LOOM_RELEASE_TAG` 指定新的发布标签。安装包上传到 Release 附件，构建产物继续由 Git 忽略。
+构建同时生成 `release/plugins/manifest.json`（远程安装 URL）、`distribution.json`（各插件版本与校验值）和 `SHA256SUMS`。默认下载地址为本仓库 GitHub Releases 的 `v0.1.1`；可用 `LOOM_RELEASE_TAG` 指定新的发布标签。安装包上传到 Release 附件，构建产物继续由 Git 忽略。
 
 在消费工程的 `packages/manifest.json` 中合并所需插件的依赖项，例如：
 
 ```json
 {
   "dependencies": {
-    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.1.0/loom.bt-1.0.0.layapkg"
+    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.1.1/loom.bt-1.0.0.layapkg"
   }
 }
 ```
 
-安装全部插件可使用 Release 附件中的 [manifest.json](https://github.com/eggbbq/loom/releases/download/v0.1.0/manifest.json)，保留工程已有依赖。需要 core 的 pathfinding 应同时添加两包的 URL。首次安装不要使用 `--skip-package-install`。Git 仓库地址不作为安装源。
+安装全部插件可使用 Release 附件中的 [manifest.json](https://github.com/eggbbq/loom/releases/download/v0.1.1/manifest.json)，保留工程已有依赖。需要 core 的 pathfinding 应同时添加两包的 URL。首次安装不要使用 `--skip-package-install`。Git 仓库地址不作为安装源。
 
 CLI 3.4.1 的 Happy DOM 会对跨域下载额外发送 OPTIONS 请求，GitHub Release 不接受该预检。本仓库的 CLI 包装脚本仅对 `.layapkg` 下载使用 curl，保留官方安装与编译流程；例如 `node scripts/laya.mjs build web --project /path/to/game` 可协调目标工程中的远程包。此兼容层只用于 CLI，不随插件分发，也不修改 IDE 或引擎文件。
 

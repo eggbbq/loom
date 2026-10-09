@@ -131,7 +131,8 @@ for (const manifest of selected) {
             assert.ok(existsSync(path.join(consumer, 'release/web/portraits/hero.png')));
             assert.ok(existsSync(path.join(consumer, 'release/web/resources/address.json')));
             assert.ok(!existsSync(path.join(consumer, 'release/web/editorResources')));
-            checks.push('mapping/images export');
+            run(process.execPath, ['tests/installed-address-mapping.cjs', consumer]);
+            checks.push('mapping/images export', 'installed IDE load/unload during resource imports');
         }
         if (manifest.name === 'loom.atlas') {
             const config = JSON.parse(readFileSync(path.join(consumer, 'release/web/fileconfig.json'), 'utf8'));

@@ -1,7 +1,7 @@
 {
   "name": "loom.address",
   "displayName": "Loom Address",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Generate resource address mappings through native LayaAir asset events, CLI and build hooks.",
   "author": "eggbbq",
   "license": "MIT"

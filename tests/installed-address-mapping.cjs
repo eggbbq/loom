@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const vm = require('node:vm');
-const { environment } = require('./address-mapping-harness.cjs');
+const { environment, verifyReloadLifecycle } = require('./address-mapping-harness.cjs');
 
 async function run() {
     const consumer = process.argv[2], name = 'loom.address';
@@ -45,17 +45,19 @@ async function run() {
         const original = fs.readFileSync(config, 'utf8'); await hooks.unload(); hooks.uiUnload();
         await hooks.load(); assert.equal(fs.readFileSync(config, 'utf8'), original);
         await hooks.unload(); assert.equal(env.sceneListeners.size, 0); assert.equal(env.uiListeners.size, 0);
+        await verifyReloadLifecycle(env);
         let loads = 0, clears = 0;
         const host = { framework: {}, tb: {} };
         const runtimeGlobals = {
             get loom() { return this.window.loom; },
-            Laya: { regClass: () => type => type, addBeforeInitCallback: fn => { fn(); }, Loader: { JSON: 'json' }, loader: {
+            Laya: { regClass: () => type => type, ClassUtils: { getClass: () => undefined, regClass() {} }, addBeforeInitCallback: fn => { fn(); }, Loader: { JSON: 'json' }, loader: {
                 load: async url => { loads++; return { data: JSON.parse(fs.readFileSync(path.join(consumer, 'release/web', url), 'utf8')) }; },
                 clearRes: () => { clears++; },
             } },
             window: { loom: host, __setBundle_: env.globals.window.__setBundle_ },
         };
-        const runtime = path.join(consumer, 'library/packages/build', `${name}.js`);
+        const sourceRuntime = path.join(consumer, 'library/packages/build', `${name}.js`);
+        const runtime = fs.existsSync(sourceRuntime) ? sourceRuntime : path.join(consumer, 'library/packages', name, `${name}.runtime.js`);
         vm.runInNewContext(fs.readFileSync(runtime, 'utf8'), runtimeGlobals, { filename: runtime });
         assert.equal(typeof runtimeGlobals.window.loom?.address.load, 'function', 'installed runtime must install the public namespace');
         assert.equal(runtimeGlobals.window.loom, host, 'runtime must preserve the host framework');

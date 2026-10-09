@@ -8,23 +8,28 @@ export class LoomAddressMappingPlugin implements IEditorEnv.IBuildPlugin {
     private static config: AddressMappingConfig;
     private static queue: Promise<unknown> = Promise.resolve();
     private static active = false;
+    private static generation = 0;
 
     @IEditorEnv.onLoad
     static async onLoad(): Promise<void> {
+        LoomAddressMappingPlugin.generation++;
         LoomAddressMappingPlugin.active = true;
         EditorEnv.assetMgr.onAssetChanged.add(LoomAddressMappingPlugin.onAssetChanged, LoomAddressMappingPlugin);
         try {
             await LoomAddressMappingPlugin.enqueue(async () => { await LoomAddressMappingPlugin.ensureConfig(); LoomAddressMappingPlugin.config = await LoomAddressMappingPlugin.readConfig(); });
-            if (!EditorEnv.cliMode && LoomAddressMappingPlugin.config.runOnStart) await LoomAddressMappingPlugin.runNow();
+            // 资源导入可能正在等待此钩子返回；在钩子内等待 flushChanges 会互相阻塞。
+            if (!EditorEnv.cliMode && LoomAddressMappingPlugin.config.runOnStart) LoomAddressMappingPlugin.schedule();
         } catch (error) { console.error("[AddressMapping]", error); }
     }
 
     @IEditorEnv.onUnload
-    static async onUnload(): Promise<void> {
+    static onUnload(): void {
         LoomAddressMappingPlugin.active = false;
+        LoomAddressMappingPlugin.generation++;
         EditorEnv.assetMgr.onAssetChanged.remove(LoomAddressMappingPlugin.onAssetChanged, LoomAddressMappingPlugin);
         Laya.timer.clear(LoomAddressMappingPlugin, LoomAddressMappingPlugin.generateScheduled);
-        await LoomAddressMappingPlugin.queue.catch(() => {});
+        // 已开始的任务可能正在等待当前导入/重载结束。让它自行退出，不阻塞生命周期。
+        LoomAddressMappingPlugin.queue = Promise.resolve();
     }
 
     private static enqueue<T>(action: () => Promise<T>): Promise<T> {
@@ -34,12 +39,14 @@ export class LoomAddressMappingPlugin implements IEditorEnv.IBuildPlugin {
     }
 
     static runNow(): Promise<{ changed: boolean; count: number }> {
-        return LoomAddressMappingPlugin.enqueue(() => LoomAddressMappingPlugin.generate(false));
+        const generation = LoomAddressMappingPlugin.generation;
+        return LoomAddressMappingPlugin.enqueue(() => LoomAddressMappingPlugin.generate(false, generation));
     }
 
     /** CLI 校验：不写输出，过期时抛错使 CLI 返回非零退出码。 */
     static check(): Promise<{ changed: boolean; count: number }> {
-        return LoomAddressMappingPlugin.enqueue(() => LoomAddressMappingPlugin.generate(true));
+        const generation = LoomAddressMappingPlugin.generation;
+        return LoomAddressMappingPlugin.enqueue(() => LoomAddressMappingPlugin.generate(true, generation));
     }
 
     /** UI 进程转发 editorResources 配置通知；此目录不保证进入 Scene 资源库。 */
@@ -67,13 +74,17 @@ export class LoomAddressMappingPlugin implements IEditorEnv.IBuildPlugin {
             && !asset.file.split("/").includes("editorResources"));
     }
 
-    private static async generate(check: boolean): Promise<{ changed: boolean; count: number }> {
+    private static async generate(check: boolean, generation: number): Promise<{ changed: boolean; count: number }> {
+        const cancelled = () => generation !== LoomAddressMappingPlugin.generation;
+        if (cancelled()) return { changed: false, count: 0 };
         await LoomAddressMappingPlugin.ensureConfig();
         // 验证失败保留已有映射，事件仍监听，下一次配置修正可恢复。
         const config = await LoomAddressMappingPlugin.readConfig();
+        if (cancelled()) return { changed: false, count: 0 };
         LoomAddressMappingPlugin.config = config;
         if (!config.watchDirs.length) return { changed: false, count: 0 };
         await EditorEnv.assetMgr.flushChanges();
+        if (cancelled()) return { changed: false, count: 0 };
         for (const dir of config.watchDirs) {
             const asset = EditorEnv.assetMgr.getAsset(dir);
             if (asset && asset.type !== IEditorEnv.AssetType.Folder) throw new Error(`Address Mapping: watch directory is a file: ${dir}`);
@@ -84,13 +95,16 @@ export class LoomAddressMappingPlugin implements IEditorEnv.IBuildPlugin {
         const fullPath = EditorEnv.assetMgr.toFullPath(config.output);
         const exists = await IEditorEnv.utils.fileExists(fullPath);
         const previous = exists ? await IEditorEnv.utils.readJsonAsync(fullPath, true) : null;
+        if (cancelled()) return { changed: false, count: 0 };
         const changed = JSON.stringify(previous) !== JSON.stringify(result.mapping);
         if (check && changed) throw new Error(`Address Mapping: output needs update: ${config.output}`);
         if (changed) {
             const slash = config.output.lastIndexOf("/");
             if (slash >= 0) await EditorEnv.assetMgr.createFolder(config.output.substring(0, slash));
+            if (cancelled()) return { changed: false, count: 0 };
             IEditorEnv.utils.scheduleFileWrite(fullPath, JSON.stringify(result.mapping, null, config.pretty ? 2 : 0) + (config.pretty ? "\n" : ""), 0);
             await IEditorEnv.utils.flushFileWrites(fullPath);
+            if (cancelled()) return { changed: false, count: 0 };
             // 让首次生成的输出立即成为可发布资源，不等待外部文件通知。
             await EditorEnv.assetMgr.createFile(config.output);
             await EditorEnv.assetMgr.flushChanges();

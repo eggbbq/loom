@@ -4,7 +4,7 @@
 
 ## 安装与配置
 
-执行 `./build.sh loom.address`，在目标工程的包管理器安装 `release/plugins/loom.address-1.1.1.layapkg`。首次加载自动生成 **`assets/editorResources/address-mapping-watcher/config.json`**；升级、脚本重载和重新安装均保留已有配置。
+执行 `./build.sh loom.address`，在目标工程的包管理器安装 `release/plugins/loom.address-1.1.2.layapkg`。首次加载自动生成 **`assets/editorResources/address-mapping-watcher/config.json`**；升级、脚本重载和重新安装均保留已有配置。
 
 默认 `watchDirs` 为空，不生成或改写任何映射。通过工具菜单“资源地址映射：配置”打开文件，填入目标工程的目录：
 
@@ -62,7 +62,7 @@ layaair --version=3.4.1 run -p /path/to/project --script=LoomAddressMappingPlugi
 - `editor/address-mapping.ts`：共用配置校验与映射算法，不注册运行时入口。
 - `runtime/address-mapping-runtime.ts`：实现全局 API 安装、原生 Loader 加载和映射展开，由 `index.ts` 显式调用安装并处理重载恢复，供 Preview 与发布中的业务脚本调用。
 
-移动事件不提供旧路径，因此任意资源移动都会重新扫描，覆盖资源移出观察目录和父目录重命名。卸载移除监听、清理计时器并等待已开始的生成。输出事件被过滤，不会递归触发生成。
+移动事件不提供旧路径，因此任意资源移动都会重新扫描，覆盖资源移出观察目录和父目录重命名。启动生成通过计时器在加载钩子返回后执行，避免 IDE 在资源导入/热重载时互相等待。卸载移除监听、清理计时器并取消旧一轮排队任务；已开始的任务在异步等待后检查是否已卸载，不阻塞资源导入。输出事件被过滤，不会递归触发生成。
 
 测试：`npm test`；安装验证：`npm run verify:address-mapping`。测试和演示资源不随插件分发。
 

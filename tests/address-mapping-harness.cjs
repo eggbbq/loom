@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const ts = require('typescript');
+const assert = require('node:assert/strict');
 
 exports.load = function load(file, globals, imports = {}) {
     const output = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
@@ -65,4 +66,46 @@ exports.environment = function environment(project) {
         },
     };
     return env;
+};
+
+// IDE imports wait for lifecycle hooks; flushChanges waits for that same import.
+// Exercise both sides of this cycle, including an in-flight generation at unload.
+exports.verifyReloadLifecycle = async function verifyReloadLifecycle(env) {
+    const plugin = env.plugin, assetMgr = env.globals.EditorEnv.assetMgr;
+    const configPath = env.full('editorResources/address-mapping-watcher/config.json');
+    const output = env.full('resources/lifecycle.json');
+    fs.mkdirSync(path.dirname(configPath), { recursive: true });
+    fs.writeFileSync(configPath, JSON.stringify({ watchDirs: ['resources/icons'], output: 'resources/lifecycle.json', debounceMs: 0, runOnStart: true }));
+    env.register('resources/icons', 0); env.register('resources/icons/apple.png');
+    const originalFlush = assetMgr.flushChanges;
+    let importing = true, finishImport, notifyFlush, flushes = 0;
+    let imported = new Promise(resolve => finishImport = () => { importing = false; resolve(); });
+    assetMgr.flushChanges = async () => { flushes++; notifyFlush?.(); if (importing) await imported; };
+    const bounded = async promise => {
+        let timer;
+        try { return await Promise.race([promise, new Promise((_, reject) => timer = setTimeout(() => reject(Error('Lifecycle blocked by asset import')), 1000))]); }
+        finally { clearTimeout(timer); }
+    };
+    try {
+        await bounded(plugin.onLoad());
+        assert.equal(flushes, 0, 'onLoad must return before waiting for resource imports');
+        assert.equal(env.timers.size, 1, 'IDE startup generation must remain scheduled');
+        finishImport(); await env.tick();
+        assert.equal(JSON.parse(fs.readFileSync(output)).apple, 0);
+
+        importing = true;
+        imported = new Promise(resolve => finishImport = () => { importing = false; resolve(); });
+        const waiting = new Promise(resolve => notifyFlush = resolve);
+        env.register('resources/icons/new.png');
+        const oldTask = plugin.runNow();
+        await bounded(waiting);
+        await bounded(plugin.onUnload());
+        await bounded(plugin.onLoad());
+        finishImport(); await oldTask;
+        assert.ok(!('new' in JSON.parse(fs.readFileSync(output))), 'unloaded generation must not write after import resumes');
+        await env.tick();
+        assert.equal(JSON.parse(fs.readFileSync(output)).new, 0, 'reloaded plugin must resume startup generation');
+    } finally {
+        finishImport(); await plugin.onUnload(); assetMgr.flushChanges = originalFlush;
+    }
 };
