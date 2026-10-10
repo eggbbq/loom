@@ -294,3 +294,11 @@ export function create(env?: IENV) {
     (globalThis as any).loom = host.loom;
     return adapter;
 }
+
+/** 客户端模板自带全局类型，复制 TS 文件即可使用 loom.sdk。 */
+declare global {
+    interface Loom {
+        sdk: ReturnType<typeof create>;
+    }
+    var loom: Loom;
+}
