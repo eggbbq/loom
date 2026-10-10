@@ -25,22 +25,32 @@ try {
     cli('InstalledSDKProbe.bootstrap', ['--script-file', path.join(projectRoot, 'tests/installed-sdk-probe.ts')]);
     const installed = path.join(consumer, 'library/packages/loom.sdk');
     const files = walk(installed);
-    assert.ok(existsSync(path.join(installed, 'editorResources/loom.sdk/sdk.txt')));
-    assert.equal(JSON.parse(readFileSync(path.join(installed, 'editorResources/loom.sdk/sdk.txt.meta'), 'utf8')).uuid, '20abf886-34e8-4e44-a8e3-521a03bbf1ca');
+    assert.ok(existsSync(path.join(installed, 'editorResources/loom.sdk/loom.sdk.ts.txt')));
+    assert.equal(JSON.parse(readFileSync(path.join(installed, 'editorResources/loom.sdk/loom.sdk.ts.txt.meta'), 'utf8')).uuid, '20abf886-34e8-4e44-a8e3-521a03bbf1ca');
+    const resources = path.join(installed, 'editorResources/loom.sdk');
+    for (const file of ['loom.sdk.ts', 'loom.sdk.d.ts', 'loom.wechat.js', 'loom.douyin.js']) {
+        assert.equal(readFileSync(path.join(resources, file + '.txt'), 'utf8'), readFileSync(path.join(projectRoot, 'assets/plugins/loom.sdk/editorResources/loom.sdk', file + '.txt'), 'utf8'));
+    }
     assert.ok(existsSync(path.join(installed, 'build~/bundle.scene.js')));
     assert.ok(existsSync(path.join(installed, 'build~/bundle.editor.js')));
     assert.ok(!files.some(file => file.endsWith('.ts') && !file.endsWith('.d.ts')), 'no package TS implementation');
     assert.ok(files.filter(file => file.endsWith('.js')).every(file => path.dirname(file) === path.join(installed, 'build~')), 'only editor JS; no SDK runtime or JS bridges');
-    const adapter = path.join(consumer, 'src/loom/sdk.ts');
-    const template = path.join(consumer, 'assets/editorResources/loom.sdk/sdk.txt');
+    const adapter = path.join(consumer, 'src/loom/loom.sdk.ts');
+    const template = path.join(consumer, 'assets/editorResources/loom.sdk/loom.sdk.ts.txt');
     const configFile = path.join(consumer, 'assets/editorResources/loom.sdk/config.json');
     assert.ok(existsSync(adapter), 'installation generates default project TS');
+    for (const file of ['loom.sdk.ts', 'loom.sdk.d.ts', 'loom.wechat.js', 'loom.douyin.js']) {
+        assert.equal(readFileSync(path.join(consumer, 'src/loom', file), 'utf8'), readFileSync(path.join(resources, file + '.txt'), 'utf8'));
+    }
+    const nativeFiles = ['loom.wechat.js', 'loom.douyin.js', 'loom.sdk.d.ts'].map(file => path.join(consumer, 'src/loom', file));
+    for (const file of nativeFiles) writeFileSync(file, readFileSync(file, 'utf8') + '\n// project customization retained\n');
+    const nativeCopies = nativeFiles.map(file => ({ file, code: readFileSync(file, 'utf8'), meta: readFileSync(file + '.meta', 'utf8') }));
     const meta = readFileSync(adapter + '.meta', 'utf8');
     const bundle = readFileSync(adapter.replace(/\.ts$/, '.bundledef'), 'utf8');
     writeFileSync(adapter, readFileSync(adapter, 'utf8') + '\n// project customization retained\n');
     writeFileSync(template, readFileSync(template, 'utf8') + '\n// project template customization retained\n');
     const edited = readFileSync(adapter, 'utf8');
-    const settings = '{ "output": "src/loom/sdk.ts", "custom": true }\n';
+    const settings = '{ "output": "src/loom/loom.sdk.ts", "custom": true }\n';
     writeFileSync(configFile, settings);
     cli('LoomSDKPlugin.generate');
     cli('LoomSDKEditor.generate');
@@ -54,17 +64,25 @@ try {
     assert.equal(readFileSync(adapter, 'utf8'), edited);
     assert.ok(readFileSync(template, 'utf8').includes('project template customization retained'));
     assert.equal(readFileSync(adapter + '.meta', 'utf8'), meta);
-    const id = randomUUID();
-    writeFileSync(path.join(consumer, 'assets/Business.ts'), `
-const sdkAtTop = loom.sdk;
-if (!sdkAtTop) throw new Error("SDK not mounted at business module evaluation");
-const native = {
+    for (const copy of nativeCopies) {
+        assert.equal(readFileSync(copy.file, 'utf8'), copy.code);
+        assert.equal(readFileSync(copy.file + '.meta', 'utf8'), copy.meta);
+    }
+    // Simulate the platform JS loaded by the host before the generated entry.
+    const entry = adapter.replace(/\.ts$/, '.entry.ts');
+    writeFileSync(entry, `const native = {
     platform: "douyin" as const,
     init() { if (this !== native || (window as any).$env?.appid !== "probe") throw new Error("SDK global environment forwarding failed"); },
     login(options: { success(): void }) { options.success(); },
     getLaunchOptionsSync() { return { scene: "0012", query: {} }; },
 };
 (window as any).__sdk = native;
+` + readFileSync(entry, 'utf8'));
+    const id = randomUUID();
+    writeFileSync(path.join(consumer, 'assets/Business.ts'), `
+const sdkAtTop = loom.sdk;
+if (!sdkAtTop) throw new Error("SDK not mounted at business module evaluation");
+
 loom.sdk.init({ appid: "probe", debug: false });
 let loggedIn = false;
 loom.sdk.login({ success: () => { loggedIn = true; }, fail: () => { throw new Error("Unexpected SDK login failure"); } });

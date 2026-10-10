@@ -12,7 +12,7 @@ window.__sdkErrors=[];
 window.addEventListener('error',e=>window.__sdkErrors.push(e.message));
 window.addEventListener('unhandledrejection',e=>window.__sdkErrors.push(String(e.reason)));
 window.addEventListener('load',()=>setTimeout(()=>{
- const ok=window.__sdkStartup===true && window.loom?.sdk?.constructor.name==='LoomSDKAdapter' && !window.__sdkErrors.length;
+ const ok=window.__sdkStartup===true && typeof window.loom?.sdk?.init==='function' && !window.__sdkErrors.length;
  const pre=document.createElement('pre');pre.id='sdk-result';pre.textContent=JSON.stringify({ok,errors:window.__sdkErrors});document.body.appendChild(pre);
 },1000));
 </script>`;

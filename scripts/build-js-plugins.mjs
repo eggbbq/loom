@@ -4,6 +4,7 @@ import path from 'node:path';
 import ts from 'typescript';
 import { projectFile, projectRoot, requirePackageExport, run, runLaya } from './laya.mjs';
 import { distributionSettings, writePluginDistribution } from './plugin-distribution.mjs';
+import { syncSDKTemplate } from './sync-sdk-template.mjs';
 
 const plugins = readdirSync(path.join(projectRoot, 'assets/plugins')).filter(name => existsSync(path.join(projectRoot, 'assets/plugins', name, 'package.json'))).sort().map(name => {
     const source = path.join(projectRoot, 'assets/plugins', name);
@@ -31,6 +32,7 @@ distributionSettings();
 let staging;
 try {
     requirePackageExport();
+    syncSDKTemplate();
     mkdirSync(path.join(projectRoot, 'temp'), { recursive: true });
     staging = mkdtempSync(path.join(projectRoot, 'temp/js-package-build-'));
     // Source archives are compiler inputs, kept out of the default distribution folder.

@@ -14,7 +14,7 @@ export class InstalledSDKProbe {
             throw new Error("Project SDK must be mounted before no-import business code");
         }
         const fs = IEditorEnv.require("fs"), path = IEditorEnv.require("path");
-        const meta = JSON.parse(fs.readFileSync(path.join(EditorEnv.projectPath, "src/loom/sdk.ts.meta"), "utf8"));
+        const meta = JSON.parse(fs.readFileSync(path.join(EditorEnv.projectPath, "src/loom/loom.sdk.entry.ts.meta"), "utf8"));
         const adapter = Laya.ClassUtils.getClass(meta.uuid) as { install(): void };
         if (!adapter) throw new Error("Generated SDK adapter registration missing");
         (window.loom as any).sdk = null;

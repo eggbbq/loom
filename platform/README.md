@@ -1,8 +1,8 @@
 # Platform
 
-本目录是 Loom 仓库内的独立 TypeScript 工程，从 `jy_minigame_sdk` 迁入。它提供微信、抖音的具体 SDK 实现；`assets/plugins/loom.sdk` 负责向 Laya 项目生成可修改的适配器，两个工程独立构建。
+本目录是 Loom 仓库内的独立 TypeScript 工程，从 `jy_minigame_sdk` 迁入。它提供微信、抖音的具体 SDK 实现；`assets/plugins/loom.sdk` 负责向 Laya 项目生成可修改的适配器，两个工程独立构建。插件的 `editorResources/loom.sdk/loom.sdk.ts.txt` 原样使用本工程的 `src/loom.sdk.ts`；仓库根目录构建插件时自动同步默认模板，Laya 注册与自动挂载代码由生成器写入独立的 `loom.sdk.entry.ts`。
 
-在仓库根目录可执行 `npm ci --prefix platform`、`npm run platform:check` 与 `npm run platform:build`。小游戏加载下方对应平台 JS 后，可通过生成的 `loom.sdk.init(config)` 使用统一接口；适配器读取全局 `__sdk` 并将初始化配置传入全局 `$env`。平台构建产物与依赖缓存不入库、不进入插件安装包。
+在仓库根目录可执行 `npm ci --prefix platform`、`npm run platform:check` 与 `npm run platform:build`。小游戏加载下方对应平台 JS 后，可通过生成的 `loom.sdk.init(config)` 使用统一接口；适配器读取全局 `__sdk` 并将初始化配置传入全局 `$env`。`dist/` 与依赖缓存不入库；`build.sh` 同步的 `.txt` 资源随插件分发，安装时还原为项目文件。
 
 1. 这个是一个ts项目
 2. 用于适配不同小游戏平台的SDK
@@ -20,7 +20,7 @@
 npm ci
 ```
 
-类型检查并构建全部平台：
+类型检查、构建全部平台，并复制产物到插件编辑器资源目录：
 
 ```sh
 sh scripts/build.sh
@@ -32,6 +32,15 @@ sh scripts/build.sh
 sh scripts/build.sh wechat
 sh scripts/build.sh douyin
 ```
+
+`scripts/build.sh` 在构建成功后调用新增的 `scripts/copy-dist.mjs`，将 `dist/` 中全部文件复制到 `../assets/plugins/loom.sdk/editorResources/loom.sdk/`，每个文件在完整原名后追加 `.txt`：
+
+- `loom.sdk.ts` → `loom.sdk.ts.txt`
+- `loom.sdk.d.ts` → `loom.sdk.d.ts.txt`
+- `loom.wechat.js` → `loom.wechat.js.txt`
+- `loom.douyin.js` → `loom.douyin.js.txt`
+
+复制内容保持不变，已有 `.meta` UUID 保留；更新的是插件默认资源，不覆盖消费项目自己的模板或适配器。可单独运行 `npm run copy:dist` 复制已有产物。脚本路径相对自身解析，可从其他工作目录调用 `build.sh`。
 
 也可以使用 `npm run typecheck` 单独检查类型，或使用 `npm run build -- wechat` 单独打包。`npm test` 构建并执行模拟平台测试；`npm run check` 执行类型检查、全部平台构建和测试。
 
@@ -324,7 +333,8 @@ src/
   loom.douyin.ts        # 抖音完整实现及全局挂载
 scripts/
   build.mjs             # 按平台打包
-  build.sh              # 类型检查与构建
+  build.sh              # 类型检查、构建与复制产物
+  copy-dist.mjs         # 完整产物文件名追加 .txt 后复制到插件
 tests/
   loom.wechat.test.mjs   # 微信构建产物测试
   loom.douyin.test.mjs   # 抖音构建产物测试

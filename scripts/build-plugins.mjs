@@ -1,6 +1,7 @@
 import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { projectRoot, requirePackageExport, run, runLaya } from './laya.mjs';
+import { syncSDKTemplate } from './sync-sdk-template.mjs';
 
 const pluginsRoot = path.join(projectRoot, 'assets/plugins');
 const outputArgs = process.argv.slice(2).filter(arg => arg.startsWith('--output-dir='));
@@ -36,6 +37,7 @@ try {
         const selected = args.length ? plugins.filter(plugin => args.includes(plugin.id)) : plugins;
         if (!selected.length) throw new Error('No plugins to build. Add a folder with package.json under assets/plugins.');
         requirePackageExport();
+        syncSDKTemplate();
         console.log('Checking TypeScript...');
         run(process.execPath, ['node_modules/typescript/bin/tsc', '--noEmit', '--pretty', 'false']);
         const tests = readdirSync(path.join(projectRoot, 'tests')).filter(name => name.endsWith('.test.cjs'));

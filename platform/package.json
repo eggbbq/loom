@@ -7,6 +7,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "node scripts/build.mjs",
+    "copy:dist": "node scripts/copy-dist.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",
     "check": "npm run typecheck && npm test"
   },

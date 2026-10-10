@@ -6,3 +6,4 @@ cd "$PROJECT_ROOT"
 
 npm run typecheck
 npm run build -- "$@"
+npm run copy:dist

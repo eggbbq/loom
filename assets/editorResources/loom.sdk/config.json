@@ -1,3 +1,3 @@
 {
-  "output": "src/loom/sdk.ts"
+  "output": "src/loom/loom.sdk.ts"
 }

@@ -18,21 +18,21 @@ Node.js 要求 20 或更新版本。安装官方 LayaAir CLI 后，执行 `layaa
 
 执行 `npm run build`，在目标工程的包管理器中分别安装需要的 `release/plugins/loom.<插件名>.layapkg`。插件之间通过 `pluginDependencies` 声明真实依赖，不使用统一的 `loom.bundledef` 或源码复制入口。
 
-构建同时生成 `release/plugins/manifest.json`（远程安装 URL）、`distribution.json`（各插件版本与校验值）和 `SHA256SUMS`。默认下载地址为本仓库 GitHub Releases 的 `v0.3.0`；可用 `LOOM_RELEASE_TAG` 指定新的发布标签。安装包上传到 Release 附件，构建产物继续由 Git 忽略。
+构建同时生成 `release/plugins/manifest.json`（远程安装 URL）、`distribution.json`（各插件版本与校验值）和 `SHA256SUMS`。默认下载地址为本仓库 GitHub Releases 的 `v0.3.1`；可用 `LOOM_RELEASE_TAG` 指定新的发布标签。安装包上传到 Release 附件，构建产物继续由 Git 忽略。
 
 安装包文件名固定，例如 `loom.bt.layapkg`。URL 中的 Release tag 区分发布批次；本地重复构建使用相同 tag 时，URL 也相同，不会自动创建 Git tag。新命名用于后续 Release，已发布的 v0.1.1 仍使用原来的带版本号附件。
 
-在消费工程的 `packages/manifest.json` 中合并所需插件的依赖项，例如安装 `v0.3.0` 中的 BT 插件：
+在消费工程的 `packages/manifest.json` 中合并所需插件的依赖项，例如安装 `v0.3.1` 中的 BT 插件：
 
 ```json
 {
   "dependencies": {
-    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.3.0/loom.bt.layapkg"
+    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.3.1/loom.bt.layapkg"
   }
 }
 ```
 
-安装全部插件可使用 Release 附件中的 [manifest.json](https://github.com/eggbbq/loom/releases/download/v0.3.0/manifest.json)，保留工程已有依赖。需要 core 的 pathfinding 应同时添加两包的 URL。首次安装不要使用 `--skip-package-install`。Git 仓库地址不作为安装源。
+安装全部插件可使用 Release 附件中的 [manifest.json](https://github.com/eggbbq/loom/releases/download/v0.3.1/manifest.json)，保留工程已有依赖。需要 core 的 pathfinding 应同时添加两包的 URL。首次安装不要使用 `--skip-package-install`。Git 仓库地址不作为安装源。
 
 CLI 3.4.1 的 Happy DOM 会对跨域下载额外发送 OPTIONS 请求，GitHub Release 不接受该预检。本仓库的 CLI 包装脚本仅对 `.layapkg` 下载使用 curl，保留官方安装与编译流程；例如 `node scripts/laya.mjs build web --project /path/to/game` 可协调目标工程中的远程包。此兼容层只用于 CLI，不随插件分发，也不修改 IDE 或引擎文件。
 
@@ -40,9 +40,9 @@ CLI 3.4.1 的 Happy DOM 会对跨域下载额外发送 OPTIONS 请求，GitHub R
 
 各包以独立 JS 插件方式加载，将公开成员直接合并到 `loom`；服务对象通过 `loom.i18n`、`loom.ui`、`loom.address` 访问，保留编辑器重载恢复。Runtime JS 在 Laya 引擎之后、业务脚本之前执行，插件依赖同时通过 `pluginDependencies` 和 JS 插件 `.meta.references` 声明。在 LayaAir 3.4.1 的 Scene、官方预览和 Web 中，正序/倒序清单均通过业务顶层零 import 访问验证。API 挂载与资源、服务的异步初始化分别处理。完整验证见 [JS 安装包验证](docs/js-plugin-verification.md)。
 
-`loom.sdk` 是代码生成型编辑器插件：安装包只提供编辑器代码与 TypeScript 文本模板，不提供 SDK Runtime JS。安装后向项目生成可修改的 `src/loom/sdk.ts` 和提前加载的脚本包，由项目源码提供 `loom.sdk.init()` 等 API；升级不覆盖项目修改。
+`loom.sdk` 是代码生成型编辑器插件：安装包只提供编辑器代码与 TypeScript 文本模板，不提供 SDK Runtime JS。安装后将 `.txt` 资源还原为项目 `src/loom/` 中的 `loom.sdk.ts`、声明与平台 JS，并提供独立 Laya 入口和提前加载的脚本包，由项目源码提供 `loom.sdk.init()` 等 API；升级不覆盖项目修改。
 
-平台实现单独维护在 [platform](platform/README.md) TypeScript 子工程中，包含微信与抖音 SDK，拥有独立的依赖、检查、测试和构建。运行 `npm ci --prefix platform` 后，使用 `npm run platform:check` 或 `npm run platform:build`；产物为 `platform/dist/loom.wechat.js`、`loom.douyin.js` 和客户端声明。小游戏自行加载对应平台脚本，其全局 `__sdk` 会由项目中的 `loom.sdk` 适配器接入。该子工程不参与 Laya 脚本编译，也不进入插件安装包。
+平台实现单独维护在 [platform](platform/README.md) TypeScript 子工程中，包含微信与抖音 SDK，拥有独立的依赖、检查、测试和构建。运行 `npm ci --prefix platform` 后，使用 `npm run platform:check` 或 `npm run platform:build`；产物为 `platform/dist/loom.wechat.js`、`loom.douyin.js` 和客户端声明。小游戏自行加载对应平台脚本，其全局 `__sdk` 会由项目中的 `loom.sdk` 适配器接入。该子工程不参与 Laya 脚本编译；`sh platform/scripts/build.sh` 将产物以“完整文件名 + `.txt`”复制为 `loom.sdk` 的编辑器资源，安装时还原到项目 `src/loom/`。
 
 需要只使用全局 API 的 TypeScript 工程，可在 `tsconfig.json` 的 `include` 中追加 `"./library/packages/*/index.d.ts"`，保留原有条目。这只包含类型声明，不改变运行时执行顺序。工程不要设置 `globalName: "loom"` 覆盖共享全局对象。
 

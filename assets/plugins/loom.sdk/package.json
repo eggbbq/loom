@@ -1,7 +1,7 @@
 {
   "name": "loom.sdk",
   "displayName": "Loom SDK",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Generate editable project TypeScript adapters for third-party mini-game SDKs.",
   "author": "eggbbq",
   "license": "MIT",
