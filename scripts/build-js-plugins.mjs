@@ -65,6 +65,7 @@ try {
     for (const { source, manifest } of plugins) {
         const name = manifest.name;
         if (!selected.has(name)) continue;
+        const hasRuntime = manifest.loom?.runtime !== false;
         const folder = path.join(staging, name);
         mkdirSync(path.join(folder, 'build~'), { recursive: true });
         cpSync(path.join(types, name), folder, { recursive: true });
@@ -91,6 +92,7 @@ try {
         }).map(symbol => symbol.name);
         // JS module bridges preserve imports of public runtime exports and registered editor classes.
         for (const file of program.getSourceFiles()) {
+            if (!hasRuntime) break;
             const relative = path.relative(path.join(compiler, 'library/packages', name), file.fileName);
             if (relative.startsWith('..') || file.isDeclarationFile) continue;
             const module = checker.getSymbolAtLocation(file);
@@ -111,7 +113,7 @@ try {
             return existsSync(file) ? readFileSync(file, 'utf8').replace(/\/\/# sourceMappingURL=.*$/gm, '') : null;
         };
         const runtime = compiled('');
-        assert.ok(runtime, `missing official runtime output for ${name}`);
+        if (hasRuntime) assert.ok(runtime, `missing official runtime output for ${name}`);
         // Scene/UI precompiled package wrappers expect this export variable.
         for (const [suffix, file] of [['.scene', 'bundle.scene.js'], ['.editor', 'bundle.editor.js']]) {
             const code = compiled(suffix);
@@ -120,21 +122,23 @@ try {
                 .replaceAll('__bundle__', '__laya_precompiled__')
                 + `\nglobalThis.__loomPackageExports ??= {}; globalThis.__loomPackageExports[${JSON.stringify(name)}] = __laya_precompiled__;\n`);
         }
-        const aliases = registered.map(id => [id, Buffer.from(id.replaceAll('-', ''), 'hex').toString('base64url')]);
-        const runtimeFile = `${name}.runtime.js`;
-        writeFileSync(path.join(folder, runtimeFile), runtime.replaceAll('window.__setBundle_(', 'window.__setBundle_ && window.__setBundle_(')
-            + `\nglobalThis.__loomPackageExports ??= {}; globalThis.__loomPackageExports[${JSON.stringify(name)}] = __bundle__;\n`
-            + `for (const [id, compressed] of ${JSON.stringify(aliases)}) { const type = Laya.ClassUtils.getClass(id); if (type) Laya.ClassUtils.regClass(compressed, type); }\n`);
-        writeFileSync(path.join(folder, runtimeFile + '.meta'), JSON.stringify({ uuid: runtimeIds.get(name), importer: {
-            import: true, type: 'runtime', allowLoadInEditor: false, allowLoadInRuntime: true, autoLoad: true,
-            references: Object.keys(manifest.pluginDependencies ?? {}).map(dependency => `res://${runtimeIds.get(dependency)}`),
-        } }, null, 2));
+        if (hasRuntime) {
+            const aliases = registered.map(id => [id, Buffer.from(id.replaceAll('-', ''), 'hex').toString('base64url')]);
+            const runtimeFile = `${name}.runtime.js`;
+            writeFileSync(path.join(folder, runtimeFile), runtime.replaceAll('window.__setBundle_(', 'window.__setBundle_ && window.__setBundle_(')
+                + `\nglobalThis.__loomPackageExports ??= {}; globalThis.__loomPackageExports[${JSON.stringify(name)}] = __bundle__;\n`
+                + `for (const [id, compressed] of ${JSON.stringify(aliases)}) { const type = Laya.ClassUtils.getClass(id); if (type) Laya.ClassUtils.regClass(compressed, type); }\n`);
+            writeFileSync(path.join(folder, runtimeFile + '.meta'), JSON.stringify({ uuid: runtimeIds.get(name), importer: {
+                import: true, type: 'runtime', allowLoadInEditor: false, allowLoadInRuntime: true, autoLoad: true,
+                references: Object.keys(manifest.pluginDependencies ?? {}).map(dependency => `res://${runtimeIds.get(dependency)}`),
+            } }, null, 2));
+        }
         writeFileSync(path.join(folder, 'package.json'), JSON.stringify(manifest, null, 2));
         const output = path.join(outputRoot, `${name}.layapkg`);
         rmSync(output, { force: true });
         runLaya(['export-installable-package', path.relative(projectRoot, folder), '--output', path.relative(projectRoot, output),
             '--project', projectRoot, '--skip-package-install']);
-        console.log(`JS package: ${output} (${exports.length} public runtime exports)`);
+        console.log(`JS package: ${output} (${hasRuntime ? exports.length + " public runtime exports" : "editor-only"})`);
     }
     writePluginDistribution(plugins.filter(plugin => selected.has(plugin.manifest.name)).map(plugin => plugin.manifest), outputRoot);
 } finally {

@@ -6,12 +6,14 @@ const startupNamespaces = typeof loom === "undefined" ? {} : {
     i18n: !!loom.i18n?.gettext,
     ui: !!loom.ui?.open,
     pathfinding: !!loom.AStarGrid,
+    sdk: !!loom.sdk?.init,
 };
 const startupErrors: string[] = [];
-for (const name of ["core", "address", "bt", "i18n", "ui", "pathfinding"]) {
+for (const name of ["core", "address", "bt", "i18n", "ui", "pathfinding", "sdk"]) {
     if (!startupNamespaces[name as keyof typeof startupNamespaces]) startupErrors.push(`${name} unavailable at business module evaluation`);
 }
 try {
+    loom.sdk.init();
     const bt = new loom.BTBuilder();
     const runner = new loom.BTRunner(bt.condition(() => true), {});
     if (runner.tick(0.1) !== loom.BTStatus.Success) throw new Error("early BT execution failed");

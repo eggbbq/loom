@@ -1,0 +1,18 @@
+{
+  "name": "platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "小游戏平台 SDK 统一适配层",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node scripts/build.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "minigame-api-typings": "^3.8.21",
+    "typescript": "^7.0.2"
+  }
+}

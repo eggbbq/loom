@@ -1,0 +1,9 @@
+{
+  "entries": [
+    "res://3e3fcf7a-cc99-4f64-9362-d0f30cecaedb"
+  ],
+  "loadBeforeMain": true,
+  "allowLoadInEditor": true,
+  "allowLoadInRuntime": true,
+  "autoLoad": true
+}

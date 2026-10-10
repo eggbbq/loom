@@ -18,6 +18,12 @@ for (const manifest of selected) {
     let consumer;
     const checks = [];
     try {
+        if (manifest.name === 'loom.sdk') {
+            run(process.execPath, ['scripts/verify-sdk.mjs', '--skip-build']);
+            results.push({ name: manifest.name, passed: true, checks: ['editor-only installation', 'project-owned TS adapter/template',
+                'preserved edits/UUIDs', 'native Scene', 'TypeScript contracts', 'native Chromium Preview/Web no-import startup'] });
+            continue;
+        }
         if (manifest.name === 'loom.tables') {
             run(process.execPath, ['scripts/verify-tables.mjs', '--skip-build']);
             results.push({ name: manifest.name, passed: true, checks: ['JS-only installation', 'delayed schema/template generation',

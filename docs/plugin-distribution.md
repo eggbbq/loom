@@ -22,16 +22,16 @@
 
 ## 远程安装与发布
 
-GitHub 仓库保存源码，GitHub Releases 附件保存构建后的 `.layapkg`。消费工程通过 HTTP(S) 下载直链安装，保持独立插件管理。当前默认 Release 标签为仓库版本 `v0.2.1`；插件自己的版本仍分别取自各插件 `package.json`。
+GitHub 仓库保存源码，GitHub Releases 附件保存构建后的 `.layapkg`。消费工程通过 HTTP(S) 下载直链安装，保持独立插件管理。当前默认 Release 标签为仓库版本 `v0.3.0`；插件自己的版本仍分别取自各插件 `package.json`。
 
 文件名固定为 `<包名>.layapkg`，版本仍保留在包内 `package.json` 和 `distribution.json`，用于包管理器及依赖解析。不同 Release tag 产生不同 URL，例如 `/download/v0.2.1/loom.bt.layapkg` 与 `/download/v0.3.0/loom.bt.layapkg`。本地每次构建不会自动生成 tag；同一个 tag 下重复构建得到相同 URL。已有 v0.1.1 Release 保留原带版本号附件，新文件名从后续发布开始使用。
 
-将生成的 `release/plugins/manifest.json` 的依赖项合并到游戏工程的 `packages/manifest.json`，保留已有依赖。发布 `v0.2.1` 后，只安装 BT 的例子：
+将生成的 `release/plugins/manifest.json` 的依赖项合并到游戏工程的 `packages/manifest.json`，保留已有依赖。发布 `v0.3.0` 后，只安装 BT 的例子：
 
 ```json
 {
   "dependencies": {
-    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.2.1/loom.bt.layapkg"
+    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.3.0/loom.bt.layapkg"
   }
 }
 ```
@@ -60,17 +60,17 @@ npm run release
 npm run verify:remote -- --skip-build
 ```
 
-`npm run release` 上传已经构建和验证的全部插件，不重新构建。脚本检查工作区干净、当前提交已推送到 origin、清单和安装包校验值一致；先创建 Release 草稿，上传七个安装包及三个清单/校验附件，全部完成后发布。同名 Release 已存在时拒绝覆盖，避免改变固定版本 URL 的内容。
+`npm run release` 上传已经构建和验证的全部插件，不重新构建。脚本检查工作区干净、当前提交已推送到 origin、清单和安装包校验值一致；先创建 Release 草稿，上传八个安装包及三个清单/校验附件，全部完成后发布。同名 Release 已存在时拒绝覆盖，避免改变固定版本 URL 的内容。
 
 发布认证使用 `GH_TOKEN` / `GITHUB_TOKEN`，也可使用已经配置的 GitHub Git credential helper；需要仓库 Contents 写权限。令牌不会写入文件或命令参数。发布工具使用 Git 和 curl，不要求安装 GitHub CLI。
 
 后续版本可更新仓库 `package.json` 的版本，或在构建时指定标签：
 
 ```sh
-LOOM_RELEASE_TAG=v0.2.1 ./build.sh
+LOOM_RELEASE_TAG=v0.3.0 ./build.sh
 ```
 
-也可通过 `LOOM_RELEASE_REPOSITORY=owner/repo` 改变构建清单中的 GitHub 仓库，或用 `LOOM_PACKAGE_BASE_URL=https://your-server.example/plugins/v0.2.1` 生成其他服务器的下载直链。GitHub 发布脚本要求清单仓库与 origin 一致；自有服务器的附件上传由对应部署流程完成。
+也可通过 `LOOM_RELEASE_REPOSITORY=owner/repo` 改变构建清单中的 GitHub 仓库，或用 `LOOM_PACKAGE_BASE_URL=https://your-server.example/plugins/v0.3.0` 生成其他服务器的下载直链。GitHub 发布脚本要求清单仓库与 origin 一致；自有服务器的附件上传由对应部署流程完成。
 
 升级时修改消费工程中的版本 URL。清单中的 URL 指向具体 Release，发布新版本不会自动替换游戏已选择的版本。`.git` 地址、仓库网页和 GitHub 自动生成的源码 ZIP 不能替代安装包直链。
 

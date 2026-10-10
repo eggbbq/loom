@@ -14,7 +14,7 @@ window.__startupPageErrors=[];
 window.addEventListener('error',e=>window.__startupPageErrors.push(e.message));
 window.addEventListener('unhandledrejection',e=>window.__startupPageErrors.push(String(e.reason)));
 window.addEventListener('load',()=>setTimeout(()=>{
- const members={core:'ModuleBase',address:'address',bt:'BTBuilder',i18n:'i18n',ui:'ui',pathfinding:'AStarGrid'};
+ const members={core:'ModuleBase',address:'address',bt:'BTBuilder',i18n:'i18n',ui:'ui',pathfinding:'AStarGrid',sdk:'sdk'};
  const after=typeof loom==='undefined'?[]:Object.entries(members).filter(([,member])=>!!loom[member]).map(([name])=>name);
  const result={startup:window.__loomPackageStartup??null,afterMount:after,pageErrors:window.__startupPageErrors};
  const pre=document.createElement('pre');pre.id='package-startup-result';pre.textContent=JSON.stringify(result);document.body.appendChild(pre);
@@ -42,6 +42,9 @@ if (jsMode) {
         }
         assert.ok(scripts.indexOf('js/loom.core.runtime.js') < scripts.indexOf('js/loom.pathfinding.runtime.js'),
             `${target}: core dependency must load before pathfinding`);
+        const sdk = scripts.findIndex(src => src.includes('sdk') && !src.includes('runtime.js'));
+        assert.ok(sdk >= 0 && sdk < before, `${target}: generated SDK adapter must load before business`);
+        assert.ok(!scripts.includes('js/loom.sdk.runtime.js'), `${target}: SDK package must not supply runtime JS`);
     }
 }
 const server = createServer(async (req, res) => {
