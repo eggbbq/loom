@@ -47,6 +47,8 @@ export class UIManager {
     private _panelOptions: PanelOption[] = [];
     private _panelOptionPromise?: Promise<void>;
     private _panelBackendBy = new Map<string, Set<string>>();
+    /** Default GButton audio URL, applied when onClick registers a listener. Set before creating UI. */
+    defaultButtonSound = "";
 
     async open<T extends UIEntity = UIEntity>(address: string, data?: any, tween?: boolean): Promise<T | null>;
     async open<T extends UIEntity = UIEntity>(entity: T, data?: any, tween?: boolean): Promise<T | null>;

@@ -29,7 +29,7 @@ test('runtime installers merge direct exports, preserve the host and restore API
         ['core', { ModuleBase: class {}, mods: {}, formatf: {} }],
         ['bt', { BTBuilder: class {}, BTStatus: {} }],
         ['pathfinding', { AStarGrid: class {}, astar: {} }],
-        ['ui', { UIPanel: class {}, ui: { open() {} } }],
+        ['ui', { UIPanel: class {}, UISoundIgnore: class {}, ui: { open() {} } }],
     ];
     const installers = plugins.map(([name, api]) => {
         const callbacks = [];
@@ -70,4 +70,50 @@ test('runtime installers merge direct exports, preserve the host and restore API
         install.call(undefined);
         assert.equal(replacement[key], api[key], 'reinstall must replace a stale API');
     }
+});
+
+test('UI install hooks only GButton.onClick once and forwards the original registration', () => {
+    class GWidget {
+        onClick(...args) { this.registrations = (this.registrations ?? 0) + 1; this.registration = args; return 'original-result'; }
+    }
+    class GButton extends GWidget {
+        sound = '';
+        getComponent(type) { return this.ignore instanceof type ? this.ignore : null; }
+    }
+    class UISoundIgnore {}
+    const original = GWidget.prototype.onClick;
+    const window = {};
+    const callbacks = [];
+    let reload;
+    const ui = { defaultButtonSound: 'default.wav' };
+    load(path.join(__dirname, '../assets/plugins/loom.ui/index.ts'), {
+        window,
+        Laya: { GButton, regClass: () => type => type, addBeforeInitCallback: fn => callbacks.push(fn) },
+        IEditorEnv: { onUserScriptsLoad: (target, key) => { reload = target[key]; } },
+    }, { './runtime/ui-api': { UISoundIgnore, ui } });
+    const wrapped = GButton.prototype.onClick;
+    assert.notEqual(wrapped, original);
+    assert.equal(GWidget.prototype.onClick, original, 'non-button widgets must remain unchanged');
+    for (let iteration = 0; iteration < 100; iteration++) { callbacks[0](); reload(); }
+    assert.equal(GButton.prototype.onClick, wrapped, 'install must not stack wrappers');
+    assert.equal(GButton.prototype[Symbol.for('loom.ui.GButton.onClick.sound')].original, original,
+        'repeated install must retain the engine method rather than another wrapper');
+    const button = new GButton();
+    const listener = () => {};
+    assert.equal(button.onClick(listener), 'original-result');
+    assert.equal(button.registrations, 1, 'one onClick call must invoke the engine registration exactly once');
+    assert.deepEqual(button.registration, [listener]);
+    assert.equal(button.sound, 'default.wav');
+    ui.defaultButtonSound = 'next.wav';
+    const caller = {}, args = ['payload'];
+    button.onClick(caller, listener, args);
+    assert.deepEqual(button.registration, [caller, listener, args]);
+    assert.equal(button.registration[2], args, 'argument array identity must survive forwarding');
+    assert.equal(button.sound, 'default.wav', 'an existing sound must not be replaced');
+    const delayed = new GButton();
+    delayed.onClick(listener);
+    assert.equal(delayed.sound, 'next.wav', 'later registrations must use the current global default');
+    button.ignore = new UISoundIgnore();
+    button.onClick(listener);
+    assert.equal(button.sound, '', 'ignore must suppress even an existing native sound');
 });

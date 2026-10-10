@@ -24,7 +24,7 @@ for (const [file, scene] of [['library/packages/build/loom.ui.scene.js', true], 
     assert.ok(host.ui && typeof host.ui.open === 'function');
     if (scene) {
         assert.equal(exports.UIManager.inst, host.ui);
-        for (const name of ['UIPanel', 'UIFrame', 'UICloseButton', 'UILayer', 'UILife', 'UINavMode', 'UIAnimtion', 'UITipsManager', 'UIToolTipsManager', 'findUIEntityInParent']) { assert.ok(exports[name], `missing export ${name}`); assert.equal(host[name], exports[name]); }
+        for (const name of ['UIPanel', 'UIFrame', 'UICloseButton', 'UISoundIgnore', 'UILayer', 'UILife', 'UINavMode', 'UIAnimtion', 'UITipsManager', 'UIToolTipsManager', 'findUIEntityInParent']) { assert.ok(exports[name], `missing export ${name}`); assert.equal(host[name], exports[name]); }
         const ui = host.ui;
         window.loom = {};
         assert.equal(reloads.length, 1);

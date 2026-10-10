@@ -10,6 +10,7 @@ const runtimePath = jsMode ? '/library/packages/loom.ui/loom.ui.runtime.js' : '/
 const chrome = process.env.CHROME_BIN ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 assert.ok(existsSync(chrome), 'set CHROME_BIN to a Chromium executable for native UI browser verification');
 const panel = 'b0c345c4-9c3a-4c6a-883b-f6b19d06102f';
+const soundIgnore = 'eb88d8e2-4e80-4d1e-8b55-daf031159a76';
 const compress = id => Buffer.from(id.replaceAll('-', ''), 'hex').toString('base64url');
 const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>
 ${['laya.core', 'laya.d3', 'laya.webgl_2D', 'laya.webgl_3D', 'laya.ui2'].map(name => `<script src="/release/web/libs/${name}.js"></script>`).join('\n')}
@@ -20,16 +21,51 @@ ${['laya.core', 'laya.d3', 'laya.webgl_2D', 'laya.webgl_3D', 'laya.ui2'].map(nam
  const check=(value,message)=>{if(!value)throw Error(message)};
  try {
   Laya.PlayerConfig.UI={alwaysIncludeDefaultSkin:false};
+  const installedOnClick=Laya.GButton.prototype.onClick;
   await Laya.init(320,480);
-  const { UIPanel, UIManager, UIFrame }=window.uiAPI ?? {
+  check(Laya.GButton.prototype.onClick===installedOnClick,'engine init stacked onClick wrappers');
+  const { UIPanel, UIManager, UIFrame, UISoundIgnore }=window.uiAPI ?? {
    UIPanel:Laya.ClassUtils.getClass('${panel}'), UIManager:loom.ui.constructor,
-   UIFrame:Laya.ClassUtils.getClass('32cdfef6-44bf-4a87-8225-1fb11b3c85a4')
+   UIFrame:Laya.ClassUtils.getClass('32cdfef6-44bf-4a87-8225-1fb11b3c85a4'),
+   UISoundIgnore:loom.UISoundIgnore
   };
   check(loom.ui===UIManager.inst,'global/import singleton mismatch');
   check(Laya.ClassUtils.getClass('${panel}')===UIPanel,'UUID registry and exported component differ');
   const owner=await loom.ui.open('/fixtures/Panel.lh',{value:42},false);
   check(owner instanceof Laya.GWidget && owner.getComponent(UIPanel),'native prefab lost component binding');
   check(owner.data.value===42 && owner.parent===UIFrame.inst.panel,'native prefab open/data/layer failed');
+  check(Laya.ClassUtils.getClass('${soundIgnore}')===UISoundIgnore,'ignore marker UUID registry differs from export');
+  const muted=owner.getChildByName('Muted');
+  check(muted instanceof Laya.GButton && muted.getComponent(UISoundIgnore),'serialized ignore marker lost binding');
+  loom.ui.defaultButtonSound='default-click.wav';
+  const calls=[];
+  const playSound=Laya.SoundManager.playSound;
+  Laya.SoundManager.playSound=url=>{calls.push(url);return {volume:1}};
+  try {
+   await new Promise(resolve=>setTimeout(resolve,10));
+   const dynamic=owner.addChild(new Laya.GButton());
+   let singleCalls=0;
+   const listener=()=>singleCalls++;
+   dynamic.onClick(listener);
+   check(dynamic.sound==='default-click.wav','delayed onClick did not inject default');
+   const own=owner.addChild(new Laya.GButton());
+   own.sound='native-click.wav';
+   const caller={count:0,value:null};
+   function callback(value){this.count++;this.value=value;}
+   own.onClick(caller,callback,['args']);
+   muted.onClick(()=>{});
+   check(!muted.sound,'ignore marker did not suppress default');
+   dynamic.fireClick(); own.fireClick(); muted.fireClick();
+   check(calls.join(',')==='default-click.wav,native-click.wav','native playback duplicated or mute failed');
+   check(caller.count===1 && caller.value==='args','onClick caller/args changed');
+   dynamic.offClick(listener); own.offClick(caller,callback);
+   dynamic.fireClick(); own.fireClick();
+   check(singleCalls===1 && caller.count===1,'offClick did not remove original callbacks');
+   own.addComponent(UISoundIgnore);
+   own.onClick(()=>{});
+   own.fireClick();
+   check(calls.length===4,'ignore marker did not suppress native sound');
+  } finally {Laya.SoundManager.playSound=playSound;}
   const same=await loom.ui.open('/fixtures/Panel.lh',{value:43},false);
   check(owner===same && owner.data.value===43,'native prefab cache/refresh failed');
   await loom.ui.close(owner,false);
@@ -39,9 +75,11 @@ ${['laya.core', 'laya.d3', 'laya.webgl_2D', 'laya.webgl_3D', 'laya.ui2'].map(nam
 })();
 </script></body></html>`;
 const fixture = JSON.stringify({ _$ver: 1, _$id: 'fixture', _$type: 'GWidget', name: 'Panel', width: 100, height: 100,
-    _$comp: [{ _$type: panel, scriptPath: '~/packages/loom.ui/runtime/ui-panel.ts', anim: 0, center: false, life: 1 }] });
+    _$comp: [{ _$type: panel, scriptPath: '~/packages/loom.ui/runtime/ui-panel.ts', anim: 0, center: false, life: 1 }],
+    _$child: [{ _$id: 'muted', _$type: 'GButton', name: 'Muted', _$comp: [{ _$type: soundIgnore,
+        scriptPath: '~/packages/loom.ui/runtime/ui-sound-ignore.' + (jsMode ? 'd.ts' : 'ts') }] }] });
 const server = createServer((req, res) => {
-    if (req.url.startsWith('/native-ui.html')) { res.setHeader('Content-Type', 'text/html'); res.end(req.url.includes('published') ? html.replace(runtimePath, jsMode ? '/release/web/js/loom.ui.runtime.js' : '/release/web/js/bundle.js').replaceAll(panel, compress(panel)).replaceAll('32cdfef6-44bf-4a87-8225-1fb11b3c85a4', compress('32cdfef6-44bf-4a87-8225-1fb11b3c85a4')).replaceAll('/fixtures/Panel.lh', '/release/web/resources/Panel.lh') : html); return; }
+    if (req.url.startsWith('/native-ui.html')) { res.setHeader('Content-Type', 'text/html'); res.end(req.url.includes('published') ? html.replace(runtimePath, jsMode ? '/release/web/js/loom.ui.runtime.js' : '/release/web/js/bundle.js').replaceAll(panel, compress(panel)).replaceAll(soundIgnore, compress(soundIgnore)).replaceAll('32cdfef6-44bf-4a87-8225-1fb11b3c85a4', compress('32cdfef6-44bf-4a87-8225-1fb11b3c85a4')).replaceAll('/fixtures/Panel.lh', '/release/web/resources/Panel.lh') : html); return; }
     if (req.url === '/fixtures/Panel.lh') { res.setHeader('Content-Type', 'application/json'); res.end(fixture); return; }
     const file = path.resolve(consumer, '.' + new URL(req.url, 'http://local').pathname);
     if (!file.startsWith(path.resolve(consumer) + path.sep) || !existsSync(file)) { res.statusCode = 404; res.end(); return; }
@@ -61,6 +99,6 @@ try {
     });
     assert.equal(result.code, 0, result.stderr);
     assert.ok(result.stdout.includes('<pre>NATIVE_UI_BROWSER_PASSED</pre>'), result.stdout + result.stderr);
-    console.log(`Native Chromium + Laya engine (${mode}): package UUID bindings and actual prefab open/refresh/close passed.`);
+    console.log(`Native Chromium + Laya engine (${mode}): onClick hook, delayed buttons, default/native/mute, callback removal and prefab UUID/open/refresh/close passed.`);
     }
 } finally { await new Promise(resolve => server.close(resolve)); rmSync(profile, { recursive: true, force: true }); }

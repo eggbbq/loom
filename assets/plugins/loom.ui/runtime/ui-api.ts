@@ -3,6 +3,7 @@ export * from "./ui-const";
 export * from "./ui-frame";
 export * from "./ui-manager";
 export * from "./ui-panel";
+export { UISoundIgnore } from "./ui-sound-ignore";
 export * from "./ui-tips-manager";
 export * from "./ui-tooltips-manager";
 export * from "./ui-types";

@@ -131,14 +131,16 @@ for (const manifest of selected) {
         if (manifest.name === 'loom.ui') {
             mkdirSync(path.join(consumer, 'assets/resources'), { recursive: true });
             writeFileSync(path.join(consumer, 'assets/resources/Panel.lh'), JSON.stringify({ _$ver: 1, _$id: 'fixture', _$type: 'GWidget', name: 'Panel', width: 100, height: 100,
-                _$comp: [{ _$type: 'b0c345c4-9c3a-4c6a-883b-f6b19d06102f', scriptPath: '~/packages/loom.ui/runtime/ui-panel.d.ts', anim: 0, center: false, life: 1 }] }));
+                _$comp: [{ _$type: 'b0c345c4-9c3a-4c6a-883b-f6b19d06102f', scriptPath: '~/packages/loom.ui/runtime/ui-panel.d.ts', anim: 0, center: false, life: 1 }],
+                _$child: [{ _$id: 'muted', _$type: 'GButton', name: 'Muted', _$comp: [{
+                    _$type: 'eb88d8e2-4e80-4d1e-8b55-daf031159a76', scriptPath: '~/packages/loom.ui/runtime/ui-sound-ignore.d.ts' }] }] }));
         }
         // Runtime assertion probes intentionally narrow mutable values; type-check separate business usage.
         const typedUsage = {
             'loom.bt': 'const builder: api.BTBuilder = new loom.BTBuilder(); const runner = new api.BTRunner(builder.wait(0.1), {}); const status: api.BTStatus = runner.tick(0.1);',
             'loom.core': 'const notifier: api.Notifier = new loom.Notifier(); const manager = new api.ModuleManager(); const token = api.moduleToken<{ value: number }>("typed"); const value: number = manager.get(token)?.value ?? 0;',
             'loom.i18n': 'class Language extends api.LangBase { ok = "OK"; } const language = new Language(); language.translate(); const value: string = loom.i18n.gettext("ok");',
-            'loom.ui': 'const panel: api.UIPanel = new api.UIPanel(); const opened: Promise<Laya.GWidget> = loom.ui.open("resources/Panel.lh"); const manager: api.UIManager = loom.ui;',
+            'loom.ui': 'const panel: api.UIPanel = new api.UIPanel(); const opened: Promise<Laya.GWidget> = loom.ui.open("resources/Panel.lh"); const manager: api.UIManager = loom.ui; loom.ui.defaultButtonSound = "resources/click.wav"; const ignore: api.UISoundIgnore = new loom.UISoundIgnore();',
             'loom.pathfinding': 'const grid: api.AStarGrid = new loom.AStarGrid({ width: 2, height: 2, walkable: new Uint8Array(4).fill(1) }); const reached: boolean = grid.findPath({ x: 0, y: 0 }, { x: 1, y: 1 }).reachedTarget;',
             'loom.address': 'const addresses: Promise<Record<string, string>> = loom.address.load();',
             'loom.atlas': 'const runtime: typeof api.ManualAtlasCollectorRuntime = api.ManualAtlasCollectorRuntime;',
@@ -162,7 +164,9 @@ for (const manifest of selected) {
         }
         if (manifest.name === 'loom.ui') {
             run(process.execPath, ['tests/installed-ui-browser.mjs', consumer, '--js']);
-            checks.push('native Chromium prefab UUID/open/cache/close: Preview + Web');
+            checks.push('native Chromium onClick/default/native/mute/delayed buttons and prefab UUID/open/cache/close: Preview + Web');
+            run(process.execPath, ['tests/installed-ui-sound-browser.mjs', consumer]);
+            checks.push('real WAV decode/playback/output signal/volume/completion and mouse callback order/caller/args/offClick: Preview + Web');
         }
         checks.push('independent Web build');
         results.push({ name: manifest.name, passed: true, checks });

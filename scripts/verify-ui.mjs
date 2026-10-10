@@ -25,7 +25,9 @@ try {
     assert.ok(!existsSync(path.join(consumer, 'assets/plugins')), 'test the installed package without source copies');
     mkdirSync(path.join(consumer, 'assets/resources'), { recursive: true });
     writeFileSync(path.join(consumer, 'assets/resources/Panel.lh'), JSON.stringify({ _$ver: 1, _$id: 'fixture', _$type: 'GWidget', name: 'Panel', width: 100, height: 100,
-        _$comp: [{ _$type: 'b0c345c4-9c3a-4c6a-883b-f6b19d06102f', scriptPath: '~/packages/loom.ui/runtime/ui-panel.ts', anim: 0, center: false, life: 1 }] }));
+        _$comp: [{ _$type: 'b0c345c4-9c3a-4c6a-883b-f6b19d06102f', scriptPath: '~/packages/loom.ui/runtime/ui-panel.ts', anim: 0, center: false, life: 1 }],
+        _$child: [{ _$id: 'muted', _$type: 'GButton', name: 'Muted', _$comp: [{
+            _$type: 'eb88d8e2-4e80-4d1e-8b55-daf031159a76', scriptPath: '~/packages/loom.ui/runtime/ui-sound-ignore.ts' }] }] }));
     runLaya(['build', 'web', '--project', consumer]);
     run(process.execPath, ['tests/installed-ui.cjs', consumer]);
     run(process.execPath, ['tests/installed-ui-browser.mjs', consumer]);

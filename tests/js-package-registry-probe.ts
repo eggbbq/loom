@@ -5,6 +5,7 @@ export class JSPackageRegistryProbe {
             ["loom.core", "2f4ae248-882b-43e7-a130-192648a384e4"],
             ["loom.bt", "3d6c8aef-7da9-4fb5-94d2-c751e7c3c3ec"],
             ["loom.ui", "b0c345c4-9c3a-4c6a-883b-f6b19d06102f"],
+            ["loom.ui", "eb88d8e2-4e80-4d1e-8b55-daf031159a76"],
         ];
         for (const [name, id] of ids) {
             if (!EditorEnv.assetMgr.getAsset("~/packages/" + name)) continue;
