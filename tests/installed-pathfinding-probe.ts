@@ -6,7 +6,7 @@ function check(value: unknown, message: string): asserts value { if (!value) thr
 @IEditorEnv.regClass()
 export class InstalledPathfindingProbe {
     static verify(): void {
-        check(loom.pathfinding.AStarGrid === AStarGrid && loom.pathfinding.AstarAgentComponent === AstarAgentComponent && loom.core.CameraRef, "Package API/dependency not ready");
+        check(loom.AStarGrid === AStarGrid && loom.AstarAgentComponent === AstarAgentComponent && loom.CameraRef, "Package API/dependency not ready");
         const grid = new AStarGrid({ width: 4, height: 4, walkable: new Uint8Array(16).fill(1), allowDiagonal: true, preventCornerCutting: true });
         check(grid.findPath({ x: 0, y: 0 }, { x: 3, y: 3 }).reachedTarget, "Fixed-grid route failed");
         const owner = new Laya.Sprite3D();

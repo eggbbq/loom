@@ -6,11 +6,10 @@ const { regClass, property } = Laya;
 export class Main extends Laya.Script {
 
     onAwake(): void {
-        console.log("AAA")
+        loom.i18n
     }
 
     onStart() {
-        console.log("???")
         loom.tables.load().then(()=>{
             console.log(loom.tables.tbitem.arr[0].ico)
         });

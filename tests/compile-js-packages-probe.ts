@@ -1,8 +1,9 @@
 @IEditorEnv.regClass()
 export class CompileJSPackagesProbe {
     static verify(): void {
-        for (const name of ["core", "address", "bt", "i18n", "ui", "pathfinding"]) {
-            if (!(window.loom as any)?.[name]) throw new Error(`Source package ${name} was not loaded`);
+        const members = { core: "ModuleBase", address: "address", bt: "BTBuilder", i18n: "i18n", ui: "ui", pathfinding: "AStarGrid" };
+        for (const [name, member] of Object.entries(members)) {
+            if (!(window.loom as any)?.[member]) throw new Error(`Source package ${name} was not loaded`);
         }
         console.log("Official package JS compilation completed.");
     }

@@ -7,7 +7,8 @@ function check(value: unknown, message: string): asserts value {
 @IEditorEnv.regClass()
 export class InstalledUIProbe {
     static async verify(): Promise<void> {
-        check(loom.ui === UIManager.inst, "Package import singleton differs from global API");
+        check(loom.ui === UIManager.inst && loom.UIManager === UIManager && loom.UIPanel === UIPanel,
+            "Package class or singleton differs from global API");
         check(UILayer.Panel === "panel" && UIAnimtion.None === 0, "Package barrel omitted enums");
         const ui = loom.ui;
         const load = Laya.loader.load;

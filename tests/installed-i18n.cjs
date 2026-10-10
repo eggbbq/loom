@@ -32,15 +32,15 @@ function check(file, scene) {
     const service = host.i18n;
     assert.ok(service, 'actual installed/published entry must mount the service');
     if (scene) {
-        assert.equal(classes.I18n.inst, service);
+        assert.equal(classes.i18n, service);
         class Lang extends classes.LangBase { ok = '确定'; cancel = '取消'; }
         const lang = new Lang();
-        const unbind = service.bind(lang);
+        assert.equal(classes.LangBase, host.LangBase);
         service.settext({ ok: 'OK' });
         service.settext({ ok: 'Okay' });
+        lang.translate();
         assert.equal(lang.ok, 'Okay');
         assert.equal(lang.cancel, 'cancel');
-        unbind();
         assert.equal(reloads.length, 1);
         window.loom = { framework: {} };
         reloads[0]();

@@ -24,15 +24,16 @@ test('runtime loads and expands mappings, preserves special keys and releases th
         },
     };
     const runtimeDir = path.join(__dirname, '../assets/plugins/loom.address/runtime');
-    const runtime = load(path.join(runtimeDir, 'address-mapping-runtime.ts'), globals);
-    load(path.join(runtimeDir, '../index.ts'), globals, { './runtime/address-mapping-runtime': runtime });
+    const api = load(path.join(runtimeDir, 'address-api.ts'), globals);
+    const entry = load(path.join(runtimeDir, '../index.ts'), globals, { './runtime/address-api': api });
     assert.equal(typeof window.loom.address.load, 'function', 'module entry mounts before engine initialization');
     initialize();
     assert.equal(window.loom, existing); assert.ok(existing.framework); assert.ok(existing.tb);
     assert.equal('kits' in window.loom, false, 'API must use loom.address directly');
     assert.deepEqual(Object.keys(window.loom.address), ['load', 'data']);
     assert.equal(window.loom.address.data, undefined);
-    assert.equal(window.loom.address.load, runtime.LoomAddressMappingRuntime.load);
+    assert.equal(window.loom.address.load, entry.address.load);
+    assert.equal(window.loom.address, api.address);
     const addresses = await window.loom.address.load.call({});
     assert.equal(window.loom.address.data, addresses);
     assert.deepEqual(requested, ['resources/address.json', 'json']);
@@ -43,6 +44,10 @@ test('runtime loads and expands mappings, preserves special keys and releases th
     data = { $path: [] };
     assert.deepEqual(JSON.parse(JSON.stringify(await window.loom.address.load('custom/empty.json'))), {});
     const lastMapping = window.loom.address.data;
+    const service = window.loom.address;
+    initialize();
+    assert.equal(window.loom.address, service, 'reinstall must preserve service identity');
+    assert.equal(window.loom.address.data, lastMapping, 'reinstall must retain loaded mappings');
     assert.equal(cleared.at(-1), 'custom/empty.json');
     for (data of [null, [], {}, { $path: 'bad' }, { $path: [['icons', 1]] }, { $path: [], apple: 0 }, { $path: [['icons', '.png']], apple: '0' }, { $path: [['icons', '.png']], apple: -1 }]) {
         await assert.rejects(window.loom.address.load(), /Invalid/);

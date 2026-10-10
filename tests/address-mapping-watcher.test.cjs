@@ -59,9 +59,8 @@ test('protocol, directory order, overlap, hidden files, output exclusion and uns
 test('native lifecycle, configuration events, moves, deletes, coalescing, check and export', async () => {
     const project = fs.mkdtempSync(path.join(os.tmpdir(), 'address-mapping-'));
     const env = environment(project);
-    const runtime = load(path.join(root, '../runtime/address-mapping-runtime.ts'), env.globals);
     const { LoomAddressMappingPlugin: Plugin } = load(path.join(root, 'address-mapping-plugin.ts'), env.globals, {
-        './address-mapping': core, '../runtime/address-mapping-runtime': runtime,
+        './address-mapping': core,
     });
     const { LoomAddressMappingEditor: UI } = load(path.join(root, 'address-mapping-editor.ts'), env.globals, { './address-mapping': core });
     env.plugin = Plugin;

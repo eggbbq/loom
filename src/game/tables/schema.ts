@@ -7,7 +7,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-
 import ByteBuf from './bytebuf'
 
 // loom 全局依赖
@@ -440,12 +439,12 @@ export class Tables {
 }
 
 declare global {
-    interface LoomGlobal {
+    interface Loom {
         tables: Tables;
     }
-    var loom: LoomGlobal;
+    var loom: Loom;
 }
 
-window.loom ??= {} as LoomGlobal;
+window.loom ??= {} as Loom;
 window.loom.tables = new Tables();
 

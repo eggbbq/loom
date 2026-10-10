@@ -5,7 +5,7 @@ function check(value: unknown, message: string): asserts value { if (!value) thr
 @IEditorEnv.regClass()
 export class InstalledBTProbe {
     static verify(): void {
-        check(loom.bt.BTBuilder === BTBuilder && loom.bt.BTComponent === BTComponent, "Package/global class identity differs");
+        check(loom.BTBuilder === BTBuilder && loom.BTComponent === BTComponent, "Package/global class identity differs");
         const bt = new BTBuilder();
         let done = 0, aborts = 0;
         const runner = new BTRunner(bt.sequence(bt.wait(0.2), bt.action(ctx => { ctx.done++; })), { done: 0 });

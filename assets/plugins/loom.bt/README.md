@@ -1,6 +1,6 @@
 # Loom BT
 
-独立 LayaAir 3.4.1 插件；保留原行为树节点、组件 UUID 和算法语义。通过包入口导入，或使用 `loom.bt.BTBuilder`、`loom.bt.BTRunner`、`loom.bt.BTStatus` 等公开 API。无需其他插件；安装不生成项目配置。模块入口立即挂载，构建插件保证全局调用进入 Web 发布。
+独立 LayaAir 3.4.1 插件；保留原行为树节点、组件 UUID 和算法语义。通过包入口导入，或使用 `loom.BTBuilder`、`loom.BTRunner`、`loom.BTStatus` 等公开 API。无需其他插件；安装不生成项目配置。模块入口立即挂载，构建插件保证全局调用进入 Web 发布。
 
 构建 `./build.sh loom.bt`，安装验证 `npm run verify:bt`。
 

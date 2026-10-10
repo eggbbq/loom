@@ -24,7 +24,7 @@ try {
     process.stdout.write(probe.stdout); process.stderr.write(probe.stderr);
     assert.ok(probe.stdout.includes('Installed pathfinding:'), 'native verification entry must actually execute');
     const lock = JSON.parse(readFileSync(path.join(consumer, 'packages/package-lock.json'), 'utf8'));
-    assert.equal(lock.packages[name].dependencies['loom.core'], '1.0.0', 'native package manager must recognize pluginDependencies');
+    assert.equal(lock.packages[name].dependencies['loom.core'], manifest.pluginDependencies['loom.core'], 'native package manager must recognize pluginDependencies');
     assert.ok(!existsSync(path.join(consumer, 'assets/plugins')), 'test the installed package without source copies');
     runLaya(['build', 'web', '--project', consumer]);
     run(process.execPath, ['tests/installed-pathfinding.cjs', consumer]);

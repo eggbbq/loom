@@ -18,7 +18,7 @@ Node.js 要求 20 或更新版本。安装官方 LayaAir CLI 后，执行 `layaa
 
 执行 `npm run build`，在目标工程的包管理器中分别安装需要的 `release/plugins/loom.<插件名>.layapkg`。插件之间通过 `pluginDependencies` 声明真实依赖，不使用统一的 `loom.bundledef` 或源码复制入口。
 
-构建同时生成 `release/plugins/manifest.json`（远程安装 URL）、`distribution.json`（各插件版本与校验值）和 `SHA256SUMS`。默认下载地址为本仓库 GitHub Releases 的 `v0.1.1`；可用 `LOOM_RELEASE_TAG` 指定新的发布标签。安装包上传到 Release 附件，构建产物继续由 Git 忽略。
+构建同时生成 `release/plugins/manifest.json`（远程安装 URL）、`distribution.json`（各插件版本与校验值）和 `SHA256SUMS`。默认下载地址为本仓库 GitHub Releases 的 `v0.2.0`；可用 `LOOM_RELEASE_TAG` 指定新的发布标签。安装包上传到 Release 附件，构建产物继续由 Git 忽略。
 
 安装包文件名固定，例如 `loom.bt.layapkg`。URL 中的 Release tag 区分发布批次；本地重复构建使用相同 tag 时，URL 也相同，不会自动创建 Git tag。新命名用于后续 Release，已发布的 v0.1.1 仍使用原来的带版本号附件。
 
@@ -32,13 +32,13 @@ Node.js 要求 20 或更新版本。安装官方 LayaAir CLI 后，执行 `layaa
 }
 ```
 
-安装全部插件可使用 Release 附件中的 [manifest.json](https://github.com/eggbbq/loom/releases/download/v0.1.1/manifest.json)，保留工程已有依赖。需要 core 的 pathfinding 应同时添加两包的 URL。首次安装不要使用 `--skip-package-install`。Git 仓库地址不作为安装源。
+安装全部插件可使用 Release 附件中的 [manifest.json](https://github.com/eggbbq/loom/releases/download/v0.2.0/manifest.json)，保留工程已有依赖。需要 core 的 pathfinding 应同时添加两包的 URL。首次安装不要使用 `--skip-package-install`。Git 仓库地址不作为安装源。
 
 CLI 3.4.1 的 Happy DOM 会对跨域下载额外发送 OPTIONS 请求，GitHub Release 不接受该预检。本仓库的 CLI 包装脚本仅对 `.layapkg` 下载使用 curl，保留官方安装与编译流程；例如 `node scripts/laya.mjs build web --project /path/to/game` 可协调目标工程中的远程包。此兼容层只用于 CLI，不随插件分发，也不修改 IDE 或引擎文件。
 
 完整步骤、全局调用示例、可选 import、加载顺序以及 `build~/` 和 `library/packages/build/` 的区别见 [安装与构建指南](docs/plugin-distribution.md)。
 
-各包以独立 JS 插件方式加载并挂载 `loom.xxx`，保留编辑器重载恢复。Runtime JS 在 Laya 引擎之后、业务脚本之前执行，插件依赖同时通过 `pluginDependencies` 和 JS 插件 `.meta.references` 声明。在 LayaAir 3.4.1 的 Scene、官方预览和 Web 中，正序/倒序清单均通过业务顶层零 import 访问验证。API 挂载与资源、服务的异步初始化分别处理。完整验证见 [JS 安装包验证](docs/js-plugin-verification.md)。
+各包以独立 JS 插件方式加载，将公开成员直接合并到 `loom`；服务对象通过 `loom.i18n`、`loom.ui`、`loom.address` 访问，保留编辑器重载恢复。Runtime JS 在 Laya 引擎之后、业务脚本之前执行，插件依赖同时通过 `pluginDependencies` 和 JS 插件 `.meta.references` 声明。在 LayaAir 3.4.1 的 Scene、官方预览和 Web 中，正序/倒序清单均通过业务顶层零 import 访问验证。API 挂载与资源、服务的异步初始化分别处理。完整验证见 [JS 安装包验证](docs/js-plugin-verification.md)。
 
 需要只使用全局 API 的 TypeScript 工程，可在 `tsconfig.json` 的 `include` 中追加 `"./library/packages/*/index.d.ts"`，保留原有条目。这只包含类型声明，不改变运行时执行顺序。工程不要设置 `globalName: "loom"` 覆盖共享全局对象。
 
@@ -101,7 +101,7 @@ release/plugins/           生成的安装包，Git 忽略
 ## 添加插件
 
 1. 在 `assets/plugins/loom.<插件名>/` 创建源码、`index.ts` 和 `package.json`，包名采用 **`loom.<插件名>`**，版本采用语义版本。
-2. 用 `@IEditor.*` 注册 UI 脚本，用 `@IEditorEnv.*` 注册 Scene/构建脚本。在包 `index.ts` 中挂载自己的 `loom.xxx`，保留注册入口标记和编辑器重载回调。发布钩子必须收集入口，并验证实际安装后的执行结果。
+2. 用 `@IEditor.*` 注册 UI 脚本，用 `@IEditorEnv.*` 注册 Scene/构建脚本。在包 `index.ts` 中将公开 API 合并到 `loom`，保留注册入口标记和编辑器重载回调。发布钩子必须收集入口，并验证实际安装后的执行结果。
 3. 将测试放入 `tests/`，示例放入 `assets/examples/<插件名>/`。保留脚本 `.meta` 的 UUID。
 4. 执行 `npm run build -- loom.<插件名>`，在目标项目通过包管理器安装产物。
 
@@ -113,10 +113,9 @@ release/plugins/           生成的安装包，Git 忽略
 - [Loom Atlas](assets/plugins/loom.atlas/README.md)（`loom.atlas`）：将外部或手工制作的 `.atlas` 接入编辑视图、预览与发布，注册子图映射并收集图集及整图资源。
 - [Loom BT](assets/plugins/loom.bt/README.md)（`loom.bt`）：代码式行为树、动作生命周期和 Laya 组件驱动。
 - [Loom Core](assets/plugins/loom.core/README.md)（`loom.core`）：模块、消息、存档、协程、状态机、网络和原生 Laya 工具。
-- [Loom I18n](assets/plugins/loom.i18n/README.md)（`loom.i18n`）：语言偏好持久化、翻译字典替换与查询，以及语言对象绑定、自动刷新和解除绑定。
+- [Loom I18n](assets/plugins/loom.i18n/README.md)（`loom.i18n`）：语言偏好持久化、翻译字典替换与查询，以及语言对象的手动翻译。
 - [Loom Pathfinding](assets/plugins/loom.pathfinding/README.md)（`loom.pathfinding`）：网格与区块 A*、编辑器烘焙、动态障碍、移动 Agent 和路径平滑；声明依赖 loom.core。
 - [Loom UI](assets/plugins/loom.ui/README.md)（`loom.ui`）：面板管理、导航、生命周期代理、动画、关闭按钮和可配置提示。
-- [Loom Tables](assets/plugins/loom.tables/README.md)（`loom.tables`）：用包内 `tables.txt` 生成项目适配器，将外部脚本生成的 `Tables` 实例挂载到 `loom.tables`；表数据加载仍由项目负责。该新插件当前使用本地构建包安装，既有 v0.1.1 Release 不包含它。
 
 ## 许可证
 

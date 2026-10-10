@@ -5,7 +5,7 @@ function check(value: unknown, message: string): asserts value { if (!value) thr
 @IEditorEnv.regClass()
 export class InstalledCoreProbe {
     static async verify(): Promise<void> {
-        check(loom.core.ModuleBase === ModuleBase && loom.core.CameraRef === CameraRef && loom.core.pool === pool, "Core class or singleton identity differs");
+        check(loom.ModuleBase === ModuleBase && loom.CameraRef === CameraRef && loom.pool === pool, "Core class or singleton identity differs");
         const calls: string[] = [];
         const token = moduleToken<{ name: string }>("probe:core");
         class Probe extends ModuleBase {

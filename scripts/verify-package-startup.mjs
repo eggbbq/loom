@@ -61,7 +61,7 @@ async function verifyOrder(order, packageNames) {
         const browser = JSON.parse(readFileSync(path.join(consumer, 'startup-browser-results.json'), 'utf8'));
         const webBundle = readFileSync(path.join(consumer, 'release/web/js/bundle.js'), 'utf8');
         return { order, packages: packageNames, types: true, addressConfigCreated: true, scene, ...browser,
-            webOffsets: { business: webBundle.indexOf('var startupNamespaces'), btMount: webBundle.indexOf('LoomBTRuntime.install();') } };
+            webOffsets: { business: webBundle.indexOf('var startupNamespaces'), btMount: webBundle.indexOf('Object.assign(window.loom') } };
     } finally {
         preview?.stop();
         if (consumer && !process.env.KEEP_STARTUP_VERIFY) rmSync(consumer, { recursive: true, force: true });

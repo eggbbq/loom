@@ -40,9 +40,9 @@ const addresses: Record<string, string> = await loom.address.load();
 const apple = addresses.apple; // resources/icons/apple.png
 ```
 
-方法签名为 `loom.address.load(address = "resources/address.json"): Promise<Record<string, string>>`。输出路径可作为参数传入，例如 `await loom.address.load("data/icons.json")`；运行时不读取编辑器配置。加载与解析完成后释放 JSON 资源，返回展开后的字典，并将同一字典保存到 `loom.address.data`，供后续插件直接读取、复用已加载的数据；首次加载前 `data` 为 `undefined`。不调用 `setGetAddress`，不预加载字典中的图片。无效映射或索引使 Promise 拒绝，保留上一次成功加载的数据；空 `$path` 返回空字典。调用方可保存返回值或读取 `data`，自行执行 `addresses[key] ?? key` 等回退。
+方法签名为 `loom.address.load(address = "resources/address.json"): Promise<Record<string, string>>`。输出路径可作为参数传入，例如 `await loom.address.load("data/icons.json")`；运行时不读取编辑器配置。加载与解析完成后释放 JSON 资源，返回展开后的字典，并将同一字典保存到 `loom.address.data`，供后续插件直接读取、复用已加载的数据；首次加载前 `data` 为 `undefined`。通过包入口导入的 `address` 与 `loom.address` 为同一服务对象，重复安装保留已加载数据。不调用 `setGetAddress`，不预加载字典中的图片。无效映射或索引使 Promise 拒绝，保留上一次成功加载的数据；空 `$path` 返回空字典。调用方可保存返回值或读取 `data`，自行执行 `addresses[key] ?? key` 等回退。
 
-源码入口 `index.ts` 负责全局挂载与重载恢复；`runtime/address-mapping-runtime.ts` 中的类负责加载与解析。安装包由 `loom.address.runtime.js` 执行挂载，业务顶层可访问 API；加载资源的 `loom.address.load()` 应在引擎初始化后调用。全局 API 包含加载方法 `load` 和最近一次加载结果 `data`。挂载保留已有 loom 框架及其他成员；Scene 进程在脚本加载后注册，并在脚本重载后恢复命名空间。安装包的 `index.d.ts` 引用运行时声明；已有 loom 框架可使用 `interface LoomGlobal extends LoomApi {}` 合并自己的 API 类型，避免重复声明全局 loom 变量。
+源码入口 `index.ts` 负责全局挂载与重载恢复；`runtime/address-api.ts` 导出 `address` 服务，负责加载与解析；`index.ts` 中的 `install()` 将 API 合并到 `loom`。安装包由 `loom.address.runtime.js` 执行挂载，业务顶层可访问 API；加载资源的 `loom.address.load()` 应在引擎初始化后调用。全局 API 包含加载方法 `load` 和最近一次加载结果 `data`。挂载保留已有 loom 框架及其他成员；Scene 进程在脚本加载后注册，并在脚本重载后恢复服务挂载并保留已加载的映射数据。安装包的 `index.d.ts` 引用运行时声明；已有 loom 框架可使用 `interface Loom {}` 合并自己的 API 类型，避免重复声明全局 loom 变量。
 
 ## CLI 与发布
 
@@ -62,7 +62,7 @@ layaair --version=3.4.1 run -p /path/to/project --script=LoomAddressMappingPlugi
 - `address-mapping-plugin.ts`：Scene 注册、加载/卸载生命周期、`assetMgr.onAssetChanged`、`Laya.timer` 合并事件、串行生成、CLI 与发布钩子。所有路径通过 `assetMgr.toFullPath` 转成绝对路径；读写使用 `IEditorEnv.utils` 和资源数据库。
 - `address-mapping-editor.ts`：UI 原生菜单与中英文翻译；用 `assetDb.onAssetChanged` 监听配置并通过 `Editor.scene.runScript` 转发。`editorResources` 不保证存在于 Scene 资源库，因此两个进程分别观察。
 - `editor/address-mapping.ts`：共用配置校验与映射算法，不注册运行时入口。
-- `runtime/address-mapping-runtime.ts`：实现全局 API 安装、原生 Loader 加载和映射展开，由 `index.ts` 显式调用安装并处理重载恢复，供 Preview 与发布中的业务脚本调用。
+- `index.ts`：用一个 `install()` 函数完成全局挂载、初始化回调和重载恢复；`runtime/address-api.ts` 实现原生 Loader 加载和映射展开，供 Preview 与发布中的业务脚本调用。
 
 移动事件不提供旧路径，因此任意资源移动都会重新扫描，覆盖资源移出观察目录和父目录重命名。启动生成通过计时器在加载钩子返回后执行，避免 IDE 在资源导入/热重载时互相等待。卸载移除监听、清理计时器并取消旧一轮排队任务；已开始的任务在异步等待后检查是否已卸载，不阻塞资源导入。输出事件被过滤，不会递归触发生成。
 

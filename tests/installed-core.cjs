@@ -20,9 +20,9 @@ for (const [file, scene] of [['library/packages/build/loom.core.scene.js', true]
     if (scene) ctx.IEditorEnv = { regClass: () => type => type, regBuildPlugin: () => type => type, onUserScriptsLoad: (type, key) => reloads.push(() => type[key]()) };
     vm.runInNewContext(fs.readFileSync(path.join(consumer, file), 'utf8'), ctx, { filename: file });
     assert.equal(ctx.loom, host);
-    assert.ok(host.core, 'core must be ready before business class/token initialization');
+    assert.ok(host.ModuleBase, 'core must be ready before business class/token initialization');
     assert.equal(callbacks.length, 1); callbacks[0]();
-    const api = host.core;
+    const api = host;
     for (const name of ['ModuleBase', 'ModuleScope', 'ModuleManager', 'moduleToken', 'mods', 'Notifier', 'msg', 'ArchiveSystem', 'UserArchiveSyncData', 'CoroutineRunner', 'CoroutineComponent', 'WaitForSeconds', 'CameraRef', 'StateManagerComponent', 'pool', 'Http', 'HttpError', 'RPCChannel', 'mathf', 'uif', 'formatf', 'arrayf', 'uuidV4']) assert.ok(api[name], `missing ${name}`);
     assert.equal(api.moduleToken('same-token'), 'same-token');
     assert.equal(ctx.format, api.formatf);
@@ -30,6 +30,6 @@ for (const [file, scene] of [['library/packages/build/loom.core.scene.js', true]
     const archive = new api.ArchiveSystem(); archive.setUserId('user'); archive.write('key', 'saved');
     assert.equal(storage.get('user:key'), 'saved'); assert.equal(storage.get('user:key.version'), '1');
     assert.equal(archive.read('key'), 'saved');
-    if (scene) { assert.equal(exports.ModuleBase, api.ModuleBase); ctx.loom = {}; reloads[0](); assert.equal(ctx.loom.core, api); }
+    if (scene) { assert.equal(exports.ModuleBase, api.ModuleBase); ctx.loom = {}; reloads[0](); assert.equal(ctx.loom.ModuleBase, api.ModuleBase); }
 }
-console.log('Installed Scene/Preview and published Web entries provide early loom.core, native storage protocol and all public APIs.');
+console.log('Installed Scene/Preview and published Web entries provide early direct loom APIs, native storage protocol and all public APIs.');

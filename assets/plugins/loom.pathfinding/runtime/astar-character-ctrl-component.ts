@@ -13,7 +13,7 @@ export class AstarCharacterCtrlComponent extends Laya.Script {
     @property({ type: AstarAgentComponent, caption: "AStar Agent", tips: "未指定时自动查找当前节点上的 AstarAgentComponent。" })
     agent: AstarAgentComponent | null = null;
 
-    @property({ type: Laya.Camera, caption: "点击相机", tips: "未指定时使用 loom.core.CameraRef.main。" })
+    @property({ type: Laya.Camera, caption: "点击相机", tips: "未指定时使用 loom.CameraRef.main。" })
     camera: Laya.Camera | null = null;
 
     @property({ type: Number, caption: "射线距离", min: 0.01, step: 1, fractionDigits: 2 })
@@ -94,7 +94,7 @@ export class AstarCharacterCtrlComponent extends Laya.Script {
     }
 
     private onStageMouseDown(): void {
-        if (this.ignorePointerOverUI || loom.core.uif.isPointerOverUI()) {
+        if (this.ignorePointerOverUI || loom.uif.isPointerOverUI()) {
             this.cancelPointer();
             return;
         }
@@ -106,7 +106,7 @@ export class AstarCharacterCtrlComponent extends Laya.Script {
     private onStageMouseUp(): void {
         if (!this.m_pointerDown) return;
         this.m_pointerDown = false;
-        if (this.ignorePointerOverUI && loom.core.uif.isPointerOverUI()) return;
+        if (this.ignorePointerOverUI && loom.uif.isPointerOverUI()) return;
 
         const deltaX = Laya.stage.mouseX - this.m_downPosition.x;
         const deltaY = Laya.stage.mouseY - this.m_downPosition.y;
@@ -128,7 +128,7 @@ export class AstarCharacterCtrlComponent extends Laya.Script {
 
     private resolveCamera(): Laya.Camera | null {
         if (this.camera && !this.camera.destroyed) return this.camera;
-        const camera = loom.core.CameraRef.main;
+        const camera = loom.CameraRef.main;
         return camera && !camera.destroyed ? camera : null;
     }
 

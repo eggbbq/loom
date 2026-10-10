@@ -1,13 +1,28 @@
-import { LoomCoreRuntime } from "./runtime/core-runtime";
-export * from "./runtime/core-runtime";
+import * as api from "./runtime/core-api";
+export * from "./runtime/core-api";
+export type { Env } from "./runtime/g";
 
-// 包入口加载时立即挂载；业务顶层调用的顺序仍取决于目标平台的编译结果。
-LoomCoreRuntime.install();
-Laya.addBeforeInitCallback(LoomCoreRuntime.install);
-if (typeof IEditorEnv !== "undefined") {
-    IEditorEnv.onUserScriptsLoad(LoomCoreRuntime, "install");
+type CoreAPI = typeof api;
+
+function install() {
+    (window as any).$env ??= { log: { loom: false } };
+    Object.assign(window.loom ??= {} as Loom, api);
+    (window as any).format = api.formatf;
 }
 
-// 让 IDE 与安装包编译器发现入口，保留顶层挂载代码。
+install();
+Laya.addBeforeInitCallback(install);
+
+if (typeof IEditorEnv !== "undefined") {
+    IEditorEnv.onUserScriptsLoad({ install }, "install");
+}
+
+declare global {
+    interface Loom extends CoreAPI {}
+    var loom: Loom;
+    const format: typeof api.formatf;
+}
+
+// 保留安装包编译器需要的入口注册标记。
 @Laya.regClass()
 export class LoomCorePackageEntry {}

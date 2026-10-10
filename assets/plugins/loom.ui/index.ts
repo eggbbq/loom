@@ -1,13 +1,24 @@
-import { LoomUIRuntime } from "./runtime/ui-runtime";
-export * from "./runtime/ui-runtime";
+import * as api from "./runtime/ui-api";
+export * from "./runtime/ui-api";
 
-// 包入口加载时立即挂载；业务顶层调用的顺序仍取决于目标平台的编译结果。
-LoomUIRuntime.install();
-Laya.addBeforeInitCallback(LoomUIRuntime.install);
-if (typeof IEditorEnv !== "undefined") {
-    IEditorEnv.onUserScriptsLoad(LoomUIRuntime, "install");
+type UIAPI = typeof api;
+
+function install() {
+    Object.assign(window.loom ??= {} as Loom, api);
 }
 
-// 让 IDE 与安装包编译器发现入口，保留顶层挂载代码。
+install();
+Laya.addBeforeInitCallback(install);
+
+if (typeof IEditorEnv !== "undefined") {
+    IEditorEnv.onUserScriptsLoad({ install }, "install");
+}
+
+declare global {
+    interface Loom extends UIAPI {}
+    var loom: Loom;
+}
+
+// 保留安装包编译器需要的入口注册标记。
 @Laya.regClass()
 export class LoomUiPackageEntry {}

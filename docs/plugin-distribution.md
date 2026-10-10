@@ -18,15 +18,15 @@
 
 已经执行过 `npm ci` 时，可以使用 `npm run build` 或 `npm run build -- loom.bt`。`npm run build:js` 是默认构建的同义命令。Node.js 要求 20 或更新版本，官方 LayaAir CLI 使用 3.4.1。
 
-包管理器显示名称统一使用 `Loom Address`、`Loom Atlas`、`Loom BT`、`Loom Core`、`Loom I18n`、`Loom Pathfinding`、`Loom Tables`、`Loom UI`。程序包标识仍为 `loom.address` 等；项目配置目录与包名一致，例如 `assets/editorResources/loom.address/`、`loom.atlas/`、`loom.tables/`。首次加载创建缺失的默认配置，重载和升级保留已有配置；Address 和 Atlas 会将旧配置复制到新目录，旧文件及 UUID 保留为备份，新路径已有配置时不覆盖。
+包管理器显示名称统一使用 `Loom Address`、`Loom Atlas`、`Loom BT`、`Loom Core`、`Loom I18n`、`Loom Pathfinding`、`Loom UI`。程序包标识仍为 `loom.address` 等；项目配置目录与包名一致，例如 `assets/editorResources/loom.address/`、`loom.atlas/`。首次加载创建缺失的默认配置，重载和升级保留已有配置；Address 和 Atlas 会将旧配置复制到新目录，旧文件及 UUID 保留为备份，新路径已有配置时不覆盖。
 
 ## 远程安装与发布
 
-GitHub 仓库保存源码，GitHub Releases 附件保存构建后的 `.layapkg`。消费工程通过 HTTP(S) 下载直链安装，保持独立插件管理。当前默认 Release 标签为仓库版本 `v0.1.1`；插件自己的版本仍分别取自各插件 `package.json`。
+GitHub 仓库保存源码，GitHub Releases 附件保存构建后的 `.layapkg`。消费工程通过 HTTP(S) 下载直链安装，保持独立插件管理。当前默认 Release 标签为仓库版本 `v0.2.0`；插件自己的版本仍分别取自各插件 `package.json`。
 
 文件名固定为 `<包名>.layapkg`，版本仍保留在包内 `package.json` 和 `distribution.json`，用于包管理器及依赖解析。不同 Release tag 产生不同 URL，例如 `/download/v0.2.0/loom.bt.layapkg` 与 `/download/v0.3.0/loom.bt.layapkg`。本地每次构建不会自动生成 tag；同一个 tag 下重复构建得到相同 URL。已有 v0.1.1 Release 保留原带版本号附件，新文件名从后续发布开始使用。
 
-将生成的 `release/plugins/manifest.json` 的依赖项合并到游戏工程的 `packages/manifest.json`，保留已有依赖。下一次以 `LOOM_RELEASE_TAG=v0.2.0 ./build.sh` 构建并发布后，只安装 BT 的例子：
+将生成的 `release/plugins/manifest.json` 的依赖项合并到游戏工程的 `packages/manifest.json`，保留已有依赖。发布 `v0.2.0` 后，只安装 BT 的例子：
 
 ```json
 {
@@ -91,16 +91,18 @@ LOOM_RELEASE_TAG=v0.2.0 ./build.sh
 
 这一步提供 TypeScript 类型，不引入运行时脚本。已有 `compilerOptions` 和其他 `include` 项目应保留；首次安装后类型提示未刷新时，重启 TypeScript 服务。
 
+每个包在 `index.ts` 中使用一个 `install()` 函数完成 API 挂载，并注册引擎初始化与 Scene 用户脚本重载回调。保留入口注册标记供安装包编译器收集代码，无需额外的运行时包装类。
+
 默认 JS 包允许业务模块顶层直接访问已经挂载的 API：
 
 ```ts
-const builder = new loom.bt.BTBuilder();
-const notifier = new loom.core.Notifier();
-const offset = loom.core.pool.v3.rent(1, 0, 2);
-loom.core.pool.v3.release(offset);
+const builder = new loom.BTBuilder();
+const notifier = new loom.Notifier();
+const offset = loom.pool.v3.rent(1, 0, 2);
+loom.pool.v3.release(offset);
 ```
 
-`loom.core`、`loom.bt` 和 `loom.pathfinding` 提供各自的公开 API；`loom.address` 提供 `load` 和 `data`；`loom.i18n` 是翻译服务实例；`loom.ui` 是 UIManager 实例。Atlas 自动接入子图映射和资源收集，没有 `loom.atlas` 命名空间。
+Core、BT、Pathfinding 和 UI 的公开类、枚举与工具直接挂载到 `loom`，不再使用 `loom.core`、`loom.bt`、`loom.pathfinding` 层级；`loom.address` 提供 `load` 和 `data`；`loom.i18n` 是翻译服务对象；`loom.ui` 是 UIManager 实例。Atlas 自动接入子图映射和资源收集，没有 `loom.atlas` 命名空间。
 
 公开包入口仍支持显式导入，适合使用局部名称、继承类或引用类型：
 

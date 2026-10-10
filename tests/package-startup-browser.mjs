@@ -14,7 +14,8 @@ window.__startupPageErrors=[];
 window.addEventListener('error',e=>window.__startupPageErrors.push(e.message));
 window.addEventListener('unhandledrejection',e=>window.__startupPageErrors.push(String(e.reason)));
 window.addEventListener('load',()=>setTimeout(()=>{
- const after=typeof loom==='undefined'?[]:['core','address','bt','i18n','ui','pathfinding'].filter(name=>!!loom[name]);
+ const members={core:'ModuleBase',address:'address',bt:'BTBuilder',i18n:'i18n',ui:'ui',pathfinding:'AStarGrid'};
+ const after=typeof loom==='undefined'?[]:Object.entries(members).filter(([,member])=>!!loom[member]).map(([name])=>name);
  const result={startup:window.__loomPackageStartup??null,afterMount:after,pageErrors:window.__startupPageErrors};
  const pre=document.createElement('pre');pre.id='package-startup-result';pre.textContent=JSON.stringify(result);document.body.appendChild(pre);
 },1000));

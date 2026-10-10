@@ -1,9 +1,10 @@
-import type {} from "~/packages/loom.address/runtime/address-mapping-runtime";
+import { address } from "~/packages/loom.address";
 
 /** 只由隔离消费工程的 CLI --script-file 加载，不随插件分发。 */
 @IEditorEnv.regClass()
 export class InstalledAddressMappingProbe {
     static async verify(): Promise<void> {
+        if (loom.address !== address) throw new Error("Package import created a second address service");
         const addresses: Record<string, string> = await loom.address.load();
         if (loom.address.data !== addresses) throw new Error("Runtime did not retain the loaded mapping");
         if (addresses.apple !== "resources/icons/apple.png" || addresses.hero !== "portraits/hero.png"

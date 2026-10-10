@@ -1,13 +1,13 @@
 # 临时向量池
 
-`loom.core.pool` 提供 `Vector2` 和 `Vector3` 的轻量复用。每种对象池由独立类实现，`pool` 只保存实例入口。
+`loom.pool` 提供 `Vector2` 和 `Vector3` 的轻量复用。每种对象池由独立类实现，`pool` 只保存实例入口。
 
 ```ts
-const offset = loom.core.pool.v3.rent(target.x - origin.x, 0, target.z - origin.z);
+const offset = loom.pool.v3.rent(target.x - origin.x, 0, target.z - origin.z);
 try {
     // 在当前同步调用中使用 offset
 } finally {
-    loom.core.pool.v3.release(offset);
+    loom.pool.v3.release(offset);
 }
 ```
 

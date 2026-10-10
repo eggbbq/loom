@@ -14,7 +14,7 @@ export class AstarExampleComponent extends Laya.Script {
     private _downPosition: Laya.Vector2 = new Laya.Vector2();
     private _downTime: number = 0;
     private onStageMouseDown(): void {
-        if (loom.core.uif.isPointerOverUI()) return;
+        if (loom.uif.isPointerOverUI()) return;
 
         if (!this.agent) return;
         this._downPosition.setValue(Laya.stage.mouseX, Laya.stage.mouseY);
@@ -24,7 +24,7 @@ export class AstarExampleComponent extends Laya.Script {
 
     private _targetPos: Laya.Vector3 = new Laya.Vector3();
     private onStageMouseUp(): void {
-        if (loom.core.uif.isPointerOverUI()) return;
+        if (loom.uif.isPointerOverUI()) return;
         console.log("????????")
         if (Date.now() - this._downTime > 500) return;
         if (!this.agent) return;
@@ -35,7 +35,7 @@ export class AstarExampleComponent extends Laya.Script {
         }
 
         const ray = new Laya.Ray(new Laya.Vector3(0, 0, 0), new Laya.Vector3(0, 0, 0));
-        loom.core.CameraRef.main.viewportPointToRay(new Laya.Vector2(Laya.stage.mouseX, Laya.stage.mouseY), ray);
+        loom.CameraRef.main.viewportPointToRay(new Laya.Vector2(Laya.stage.mouseX, Laya.stage.mouseY), ray);
         const scene = this.owner.scene as Laya.Scene3D | null;
         if (!scene) return;
 
@@ -54,7 +54,7 @@ export class AstarExampleComponent extends Laya.Script {
             }
             // return;
         } else {
-            loom.core.mathf.intersectYPlane(ray, 0, pos);
+            loom.mathf.intersectYPlane(ray, 0, pos);
         }
 
         this.startMove();

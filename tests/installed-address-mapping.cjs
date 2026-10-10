@@ -28,11 +28,15 @@ async function run() {
         assert.equal(typeof hooks.scriptsLoad, 'function');
         hooks.scriptsLoad();
         assert.equal(typeof env.globals.window.loom?.address.load, 'function');
+        const service = env.globals.window.loom.address;
+        service.data = { cached: 'icons/cached.png' };
         const reloadedHost = { framework: {}, tb: {} };
         env.globals.window.loom = reloadedHost;
         hooks.scriptsLoad();
         assert.equal(env.globals.window.loom, reloadedHost);
         assert.equal(typeof reloadedHost.address.load, 'function', 'script reload must restore the runtime API');
+        assert.equal(reloadedHost.address, service);
+        assert.equal(reloadedHost.address.data.cached, 'icons/cached.png', 'reload must retain loaded mappings');
         assert.ok(reloadedHost.tb);
         const config = env.full('editorResources/loom.address/config.json');
         assert.deepEqual(JSON.parse(fs.readFileSync(config)).watchDirs, []);

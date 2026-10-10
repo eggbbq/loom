@@ -135,11 +135,11 @@ for (const manifest of selected) {
         }
         // Runtime assertion probes intentionally narrow mutable values; type-check separate business usage.
         const typedUsage = {
-            'loom.bt': 'const builder: api.BTBuilder = new loom.bt.BTBuilder(); const runner = new api.BTRunner(builder.wait(0.1), {}); const status: api.BTStatus = runner.tick(0.1);',
-            'loom.core': 'const notifier: api.Notifier = new loom.core.Notifier(); const manager = new api.ModuleManager(); const token = api.moduleToken<{ value: number }>("typed"); const value: number = manager.get(token)?.value ?? 0;',
-            'loom.i18n': 'class Language extends api.LangBase { ok = "OK"; } const unbind: () => void = loom.i18n.bind(new Language()); const value: string = loom.i18n.gettext("ok");',
-            'loom.ui': 'const panel: api.UIPanel = new api.UIPanel(); const opened: Promise<Laya.GWidget> = loom.ui.open("resources/Panel.lh"); const manager: api.UIManager = api.UIManager.inst;',
-            'loom.pathfinding': 'const grid: api.AStarGrid = new loom.pathfinding.AStarGrid({ width: 2, height: 2, walkable: new Uint8Array(4).fill(1) }); const reached: boolean = grid.findPath({ x: 0, y: 0 }, { x: 1, y: 1 }).reachedTarget;',
+            'loom.bt': 'const builder: api.BTBuilder = new loom.BTBuilder(); const runner = new api.BTRunner(builder.wait(0.1), {}); const status: api.BTStatus = runner.tick(0.1);',
+            'loom.core': 'const notifier: api.Notifier = new loom.Notifier(); const manager = new api.ModuleManager(); const token = api.moduleToken<{ value: number }>("typed"); const value: number = manager.get(token)?.value ?? 0;',
+            'loom.i18n': 'class Language extends api.LangBase { ok = "OK"; } const language = new Language(); language.translate(); const value: string = loom.i18n.gettext("ok");',
+            'loom.ui': 'const panel: api.UIPanel = new api.UIPanel(); const opened: Promise<Laya.GWidget> = loom.ui.open("resources/Panel.lh"); const manager: api.UIManager = loom.ui;',
+            'loom.pathfinding': 'const grid: api.AStarGrid = new loom.AStarGrid({ width: 2, height: 2, walkable: new Uint8Array(4).fill(1) }); const reached: boolean = grid.findPath({ x: 0, y: 0 }, { x: 1, y: 1 }).reachedTarget;',
             'loom.address': 'const addresses: Promise<Record<string, string>> = loom.address.load();',
             'loom.atlas': 'const runtime: typeof api.ManualAtlasCollectorRuntime = api.ManualAtlasCollectorRuntime;',
         }[manifest.name];

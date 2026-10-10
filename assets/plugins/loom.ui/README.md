@@ -1,5 +1,7 @@
 # Loom UI
 
+公开类和枚举直接挂载到 `loom`，例如 `loom.UIPanel`、`loom.UILife`；导出的 `ui` 与 `UIManager.inst`、`loom.ui` 是同一实例。
+
 独立 LayaAir 3.4.1 UI 运行时插件。包含面板队列、生命周期代理、导航、缓存、动画、关闭按钮和提示管理器。安装包保留原脚本 UUID；项目自行提供面板和提示预制体。
 
 ```ts

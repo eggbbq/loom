@@ -23,7 +23,7 @@ Web 业务顶层记录的是 `ReferenceError: loom is not defined`，随后同�
 因此，入口注册标记、发布钩子收集入口和初始化回调可以保证 API 被包含并在之后可用，却不足以保证如下顶层代码的执行时机：
 
 ```ts
-const bt = new loom.bt.BTBuilder();
+const bt = new loom.BTBuilder();
 ```
 
 这个结论针对本次 3.4.1 的源码版 Web 合并流程，不推断预编译 JS 分发、其他 LayaAir 版本、小游戏平台或自定义构建配置。插件数据的异步加载完成顺序也不属于这次 API 挂载验证。
