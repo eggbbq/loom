@@ -4,7 +4,7 @@
 
 ## 安装与使用
 
-执行 `./build.sh loom.i18n`，通过目标工程包管理器安装 `release/plugins/loom.i18n-1.0.0.layapkg`。安装包包含 Runtime/Scene JS 与 `.d.ts`，分别提供执行代码和类型提示。
+执行 `./build.sh loom.i18n`，通过目标工程包管理器安装 `release/plugins/loom.i18n.layapkg`。安装包包含 Runtime/Scene JS 与 `.d.ts`，分别提供执行代码和类型提示。
 
 ```ts
 loom.i18n.lang = "zh";

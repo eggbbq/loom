@@ -16,16 +16,18 @@ Node.js 要求 20 或更新版本。安装官方 LayaAir CLI 后，执行 `layaa
 
 ## 在其他工程中安装
 
-执行 `npm run build`，在目标工程的包管理器中分别安装需要的 `release/plugins/loom.<插件名>-<版本>.layapkg`。插件之间通过 `pluginDependencies` 声明真实依赖，不使用统一的 `loom.bundledef` 或源码复制入口。
+执行 `npm run build`，在目标工程的包管理器中分别安装需要的 `release/plugins/loom.<插件名>.layapkg`。插件之间通过 `pluginDependencies` 声明真实依赖，不使用统一的 `loom.bundledef` 或源码复制入口。
 
 构建同时生成 `release/plugins/manifest.json`（远程安装 URL）、`distribution.json`（各插件版本与校验值）和 `SHA256SUMS`。默认下载地址为本仓库 GitHub Releases 的 `v0.1.1`；可用 `LOOM_RELEASE_TAG` 指定新的发布标签。安装包上传到 Release 附件，构建产物继续由 Git 忽略。
 
-在消费工程的 `packages/manifest.json` 中合并所需插件的依赖项，例如：
+安装包文件名固定，例如 `loom.bt.layapkg`。URL 中的 Release tag 区分发布批次；本地重复构建使用相同 tag 时，URL 也相同，不会自动创建 Git tag。新命名用于后续 Release，已发布的 v0.1.1 仍使用原来的带版本号附件。
+
+在消费工程的 `packages/manifest.json` 中合并所需插件的依赖项，例如下一次以 `LOOM_RELEASE_TAG=v0.2.0 ./build.sh` 构建并发布后：
 
 ```json
 {
   "dependencies": {
-    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.1.1/loom.bt-1.0.0.layapkg"
+    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.2.0/loom.bt.layapkg"
   }
 }
 ```
@@ -74,7 +76,7 @@ CLI 3.4.1 的 Happy DOM 会对跨域下载额外发送 OPTIONS 请求，GitHub R
 | `npm run build:web` | 构建开发工程的 Web 演示，用于验证资源导出 |
 | `npm run preview` | 启动官方 CLI 预览服务器 |
 
-安装包输出为 `release/plugins/<包名>-<版本>.layapkg`。构建脚本调用官方 `export-installable-package`，按插件 `package.json` 中的版本命名；脚本不执行远程发布。导出命令指定当前工程并使用 `--skip-package-install`。JS 编译所需的源码包在 temp 隔离目录内生成和安装，构建结束后清理；不会将这些源码中间包放入默认分发目录。源码验证命令保留为 `verify:source:<名称>`；`verify:source:startup` 的历史 Web 失败预期保持不变。
+安装包输出为 `release/plugins/<包名>.layapkg`。构建脚本调用官方 `export-installable-package`，文件名只使用包名，插件版本仍保留在包内 `package.json`；脚本不执行远程发布。导出命令指定当前工程并使用 `--skip-package-install`。JS 编译所需的源码包在 temp 隔离目录内生成和安装，构建结束后清理；不会将这些源码中间包放入默认分发目录。源码验证命令保留为 `verify:source:<名称>`；`verify:source:startup` 的历史 Web 失败预期保持不变。
 
 安装包已构建时，可用 `npm run verify:startup -- --skip-build` 或 `npm run verify:address-mapping -- --skip-build` 验证现有产物；`npm run verify:js -- --skip-build` 验证全部 JS 插件。直接调用 npm 命令前先执行 `npm ci`。
 

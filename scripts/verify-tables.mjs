@@ -15,7 +15,7 @@ try {
     const config = JSON.parse(readFileSync(path.join(projectRoot, 'tsconfig.json'), 'utf8'));
     config.include.push('./library/packages/*/index.d.ts');
     writeFileSync(path.join(consumer, 'tsconfig.json'), JSON.stringify(config));
-    cpSync(path.join(projectRoot, 'release/plugins/loom.tables-1.0.0.layapkg'), path.join(consumer, 'plugin.layapkg'));
+    cpSync(path.join(projectRoot, 'release/plugins/loom.tables.layapkg'), path.join(consumer, 'plugin.layapkg'));
     writeFileSync(path.join(consumer, 'packages/manifest.json'), JSON.stringify({ dependencies: { 'loom.tables': 'file:../plugin.layapkg' } }));
     const cli = (method, extra = []) => {
         const result = runLaya(['run', '--project', consumer, `--script=${method}`, ...extra], { stdio: 'pipe', encoding: 'utf8' });

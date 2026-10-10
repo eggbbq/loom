@@ -12,7 +12,7 @@
 ./build.sh loom.pathfinding # 同时输出依赖的 loom.core
 ```
 
-产物为 `release/plugins/<包名>-<版本>.layapkg`。在目标工程的 LayaAir 包管理器中选择这些安装包；依赖包也需要可供安装。脚本只生成本地产物，不发布到远程仓库或商店。
+产物为 `release/plugins/<包名>.layapkg`。在目标工程的 LayaAir 包管理器中选择这些安装包；依赖包也需要可供安装。脚本只生成本地产物，不发布到远程仓库或商店。
 
 构建同时生成 `manifest.json`、`distribution.json` 和 `SHA256SUMS`；单插件构建的清单仅包含该插件及其依赖，不混入目录中已有的其他安装包。
 
@@ -24,12 +24,14 @@
 
 GitHub 仓库保存源码，GitHub Releases 附件保存构建后的 `.layapkg`。消费工程通过 HTTP(S) 下载直链安装，保持独立插件管理。当前默认 Release 标签为仓库版本 `v0.1.1`；插件自己的版本仍分别取自各插件 `package.json`。
 
-将生成的 `release/plugins/manifest.json` 的依赖项合并到游戏工程的 `packages/manifest.json`，保留已有依赖。只安装 BT 的例子：
+文件名固定为 `<包名>.layapkg`，版本仍保留在包内 `package.json` 和 `distribution.json`，用于包管理器及依赖解析。不同 Release tag 产生不同 URL，例如 `/download/v0.2.0/loom.bt.layapkg` 与 `/download/v0.3.0/loom.bt.layapkg`。本地每次构建不会自动生成 tag；同一个 tag 下重复构建得到相同 URL。已有 v0.1.1 Release 保留原带版本号附件，新文件名从后续发布开始使用。
+
+将生成的 `release/plugins/manifest.json` 的依赖项合并到游戏工程的 `packages/manifest.json`，保留已有依赖。下一次以 `LOOM_RELEASE_TAG=v0.2.0 ./build.sh` 构建并发布后，只安装 BT 的例子：
 
 ```json
 {
   "dependencies": {
-    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.1.1/loom.bt-1.0.0.layapkg"
+    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.2.0/loom.bt.layapkg"
   }
 }
 ```

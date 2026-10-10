@@ -15,7 +15,7 @@ function discoverPlugins() {
         if (!/^[a-z0-9][a-z0-9.-]*$/.test(manifest.name) || !/^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/i.test(manifest.version)) {
             throw new Error(`Invalid package name/version in ${entry.name}/package.json.`);
         }
-        const output = path.relative(projectRoot, path.join(outputRoot, `${manifest.name}-${manifest.version}.layapkg`));
+        const output = path.relative(projectRoot, path.join(outputRoot, `${manifest.name}.layapkg`));
         return { id: manifest.name, manifest, source: `assets/plugins/${entry.name}`, output };
     }).sort((a, b) => a.id.localeCompare(b.id));
 }

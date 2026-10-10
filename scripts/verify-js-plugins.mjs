@@ -38,8 +38,7 @@ for (const manifest of selected) {
         const dependencies = {};
         const names = [manifest.name, ...Object.keys(manifest.pluginDependencies ?? {})];
         for (const name of names) {
-            const version = manifests.find(value => value.name === name).version;
-            cpSync(path.join(projectRoot, `release/plugins/${name}-${version}.layapkg`), path.join(consumer, name + '.layapkg'));
+            cpSync(path.join(projectRoot, `release/plugins/${name}.layapkg`), path.join(consumer, name + '.layapkg'));
             dependencies[name] = `file:../${name}.layapkg`;
         }
         writeFileSync(path.join(consumer, 'packages/manifest.json'), JSON.stringify({ dependencies }));

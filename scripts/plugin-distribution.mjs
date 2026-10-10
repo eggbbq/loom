@@ -19,7 +19,7 @@ export function writePluginDistribution(manifests, outputRoot) {
     const { repository, tag, baseUrl } = distributionSettings();
     const dependencies = {};
     const packages = manifests.map(manifest => {
-        const file = `${manifest.name}-${manifest.version}.layapkg`;
+        const file = `${manifest.name}.layapkg`;
         const data = readFileSync(path.join(outputRoot, file));
         if (!data.length) throw new Error(`Empty package: ${file}`);
         const url = `${baseUrl}/${file}`;

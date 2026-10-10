@@ -16,7 +16,7 @@ try {
     for (const dir of ['engine', 'settings']) cpSync(path.join(projectRoot, dir), path.join(consumer, dir), { recursive: true });
     mkdirSync(path.join(consumer, 'assets'), { recursive: true });
     mkdirSync(path.join(consumer, 'packages'));
-    cpSync(path.join(projectRoot, `release/plugins/source/${name}-${manifest.version}.layapkg`), path.join(consumer, 'plugin.layapkg'));
+    cpSync(path.join(projectRoot, `release/plugins/source/${name}.layapkg`), path.join(consumer, 'plugin.layapkg'));
     writeFileSync(path.join(consumer, 'packages/manifest.json'), JSON.stringify({ dependencies: { [name]: 'file:../plugin.layapkg' } }));
     const probe = runLaya(['run', '--project', consumer, '--script=InstalledCoreProbe.verify',
         '--script-file', path.join(projectRoot, 'tests/installed-core-probe.ts')], { stdio: 'pipe', encoding: 'utf8' });

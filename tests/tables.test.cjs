@@ -6,7 +6,8 @@ const os = require('node:os');
 const { load } = require('./address-mapping-harness.cjs');
 const source = path.resolve('assets/plugins/loom.tables');
 
-test('tables adapter waits for generated schema, preserves project edits and metadata, and mounts a typed instance', () => {
+test('tables adapter waits for generated schema, preserves project edits and metadata, and mounts a typed instance',
+    { skip: !fs.existsSync(path.join(source, 'package.json')) && 'loom.tables plugin is no longer part of this project' }, () => {
     const project = fs.mkdtempSync(path.join(os.tmpdir(), 'loom-tables-'));
     const watched = new Map(), reloads = [];
     const fsApi = { ...fs, watchFile: (file, _options, callback) => watched.set(file, callback), unwatchFile: file => watched.delete(file) };

@@ -8,7 +8,7 @@ Loom Atlas（手工图集收集器）将所选 `.atlas` 接入这三个环节：
 
 ## 安装与配置
 
-执行 `./build.sh loom.atlas`，在目标项目的包管理器中安装 `release/plugins/loom.atlas-1.0.2.layapkg`。插件首次加载会自动创建：
+执行 `./build.sh loom.atlas`，在目标项目的包管理器中安装 `release/plugins/loom.atlas.layapkg`。插件首次加载会自动创建：
 
 ```text
 assets/editorResources/loom.atlas/config.json
@@ -39,7 +39,7 @@ assets/editorResources/loom.atlas/config.json
 ./build.sh loom.atlas
 ```
 
-产物位于 `release/plugins/loom.atlas-1.0.2.layapkg`。使用 LayaAir CLI 3.4.1 的原生安装包导出；包包含预编译 Runtime/Scene JS、类型声明、资源及 `.meta`。
+产物位于 `release/plugins/loom.atlas.layapkg`。使用 LayaAir CLI 3.4.1 的原生安装包导出；包包含预编译 Runtime/Scene JS、类型声明、资源及 `.meta`。
 
 源码开发时，IDE 自动编译注册的脚本；无需在业务入口中 import。一个工程只保留源码或安装包其中一种接入，避免重复注册。演示和项目配置位于插件目录之外，不进入安装包。
 

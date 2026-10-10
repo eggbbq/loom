@@ -27,11 +27,11 @@ async function verifyOrder(order, packageNames) {
             const manifest = JSON.parse(readFileSync(path.join(projectRoot, 'assets/plugins', name, 'package.json'), 'utf8'));
             if (remoteMode) {
                 dependencies[name] = process.env.LOOM_VERIFY_PACKAGE_BASE_URL
-                    ? `${process.env.LOOM_VERIFY_PACKAGE_BASE_URL}/${name}-${manifest.version}.layapkg`
+                    ? `${process.env.LOOM_VERIFY_PACKAGE_BASE_URL}/${name}.layapkg`
                     : remoteDependencies[name];
                 assert.match(dependencies[name] ?? '', /^https?:\/\//, `missing HTTP package URL for ${name}`);
             } else {
-                cpSync(path.join(projectRoot, `release/plugins/${jsMode ? '' : 'source/'}${name}-${manifest.version}.layapkg`), path.join(consumer, `${name}.layapkg`));
+                cpSync(path.join(projectRoot, `release/plugins/${jsMode ? '' : 'source/'}${name}.layapkg`), path.join(consumer, `${name}.layapkg`));
                 dependencies[name] = `file:../${name}.layapkg`;
             }
         }

@@ -46,7 +46,7 @@ try {
     writeFileSync(path.join(compiler, 'tsconfig.json'), JSON.stringify(config));
     const dependencies = {};
     for (const { manifest } of plugins) {
-        cpSync(path.join(sourceOutput, `${manifest.name}-${manifest.version}.layapkg`), path.join(compiler, `${manifest.name}.layapkg`));
+        cpSync(path.join(sourceOutput, `${manifest.name}.layapkg`), path.join(compiler, `${manifest.name}.layapkg`));
         dependencies[manifest.name] = `file:../${manifest.name}.layapkg`;
     }
     writeFileSync(path.join(compiler, 'packages/manifest.json'), JSON.stringify({ dependencies }));
@@ -130,7 +130,7 @@ try {
             references: Object.keys(manifest.pluginDependencies ?? {}).map(dependency => `res://${runtimeIds.get(dependency)}`),
         } }, null, 2));
         writeFileSync(path.join(folder, 'package.json'), JSON.stringify(manifest, null, 2));
-        const output = path.join(outputRoot, `${name}-${manifest.version}.layapkg`);
+        const output = path.join(outputRoot, `${name}.layapkg`);
         rmSync(output, { force: true });
         runLaya(['export-installable-package', path.relative(projectRoot, folder), '--output', path.relative(projectRoot, output),
             '--project', projectRoot, '--skip-package-install']);

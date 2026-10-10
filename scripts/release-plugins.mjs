@@ -46,7 +46,7 @@ try {
     if (packages.length !== expected.length || new Set(packages.map(pkg => pkg.name)).size !== expected.length) throw new Error('Build all plugins before publishing a release.');
     for (const pkg of packages) {
         const source = JSON.parse(readFileSync(path.join(projectRoot, 'assets/plugins', pkg.name, 'package.json'), 'utf8'));
-        if (source.version !== pkg.version || pkg.file !== `${pkg.name}-${pkg.version}.layapkg`) throw new Error(`Package metadata changed: ${pkg.name}. Rebuild before publishing.`);
+        if (source.version !== pkg.version || pkg.file !== `${pkg.name}.layapkg`) throw new Error(`Package metadata changed: ${pkg.name}. Rebuild before publishing.`);
         if (pkg.url !== `https://github.com/${repository}/releases/download/${tag}/${pkg.file}`) throw new Error('This publisher requires GitHub Releases download URLs.');
         const hash = createHash('sha256').update(readFileSync(path.join(outputRoot, pkg.file))).digest('hex');
         if (hash !== pkg.sha256) throw new Error(`Package checksum mismatch: ${pkg.file}. Rebuild before publishing.`);
