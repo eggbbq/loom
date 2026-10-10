@@ -3,6 +3,7 @@ import { Coroutine, CoroutineRunner, CoroutineStarter } from "./coroutine";
 const { regClass } = Laya;
 
 @regClass()
+@Laya.classInfo({ menu: "loom/core" })
 export class CoroutineComponent extends Laya.Script {
     private _co: CoroutineRunner = new CoroutineRunner(true);
 

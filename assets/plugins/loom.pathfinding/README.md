@@ -2,7 +2,7 @@
 
 LayaAir 3.4.1 标准安装包，保留原组件 UUID、算法、烘焙格式和运行时导航行为。包入口 `~/packages/loom.pathfinding` 导出全部 API，公开成员直接挂载到 `loom`，例如 `loom.AStarGrid`、`loom.astar`。
 
-通过原生 `pluginDependencies` 声明依赖 `loom.core@2.0.0`，点击控制与演示组件使用其相机、UI 命中检查与射线工具。编辑器烘焙脚本位于 `editor/`；默认输出 `assets/data/pathfinding`，工程可配置输出目录。安装不生成导航数据或业务配置。测试与示例不进入包。
+通过原生 `pluginDependencies` 声明依赖 `loom.core@2.0.1`，点击控制与演示组件使用其相机、UI 命中检查与射线工具。编辑器烘焙脚本位于 `editor/`；默认输出 `assets/data/pathfinding`，工程可配置输出目录。安装不生成导航数据或业务配置。测试与示例不进入包。
 
 构建 `./build.sh loom.pathfinding`；`npm run verify:pathfinding` 在隔离工程安装两包、执行原生寻路和烘焙、验证 Web 发布入口。
 

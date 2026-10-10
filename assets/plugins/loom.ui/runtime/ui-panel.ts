@@ -8,6 +8,7 @@ export const UI_SYMBOL = Symbol("ui");
 const { regClass, property } = Laya;
 
 @regClass()
+@Laya.classInfo({ menu: "loom/ui" })
 export class UIPanel extends Laya.Script {
     @property({type:UILayer}) layer = UILayer.Panel;
     @property({type:UILife}) life = UILife.Scene;

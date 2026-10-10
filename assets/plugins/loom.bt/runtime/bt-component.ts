@@ -5,6 +5,7 @@ import { BTStatus } from "./bt-status";
 const { regClass, property } = Laya;
 
 @regClass()
+@Laya.classInfo({ menu: "loom/bt" })
 export abstract class BTComponent extends Laya.Script {
     @property({ type: Number, min: 0, step: 0.01, fractionDigits: 2 })
     btTickInterval = 0.1;

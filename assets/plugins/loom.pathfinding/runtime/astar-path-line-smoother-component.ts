@@ -4,6 +4,7 @@ import { AstarPathSmootherComponent } from "./astar-path-smoother-component";
 const { regClass } = Laya;
 
 @regClass()
+@Laya.classInfo({ menu: "loom/pathfinding" })
 export class AstarPathLineSmootherComponent extends AstarPathSmootherComponent {
 
     protected applySmoothingAlgorithm(path: Point[]): Point[] {

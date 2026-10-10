@@ -7,6 +7,7 @@ const { regClass, property } = Laya;
  * 地面必须具有 3D 碰撞体，并包含在 groundCollisionMask 中。
  */
 @regClass()
+@Laya.classInfo({ menu: "loom/pathfinding" })
 export class AstarCharacterCtrlComponent extends Laya.Script {
     declare owner: Laya.Sprite3D;
 

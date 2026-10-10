@@ -4,6 +4,7 @@ import type { IPathSmoother, IWalkabilityGrid, PathSmoothingGridOptions } from "
 const { regClass, property } = Laya;
 
 @regClass()
+@Laya.classInfo({ menu: "loom/pathfinding" })
 export class AstarPathSmootherComponent extends Laya.Script implements IPathSmoother {
     @property({ type: Boolean }) enableSmoothing = true;
     @property({ type: Number, min: 0.1, max: 2, step: 0.1 }) tolerance = 0.3;

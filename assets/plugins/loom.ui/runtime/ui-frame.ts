@@ -4,6 +4,7 @@ const { regClass, property, runInEditor } = Laya;
 
 
 @regClass()
+@Laya.classInfo({ menu: "loom/ui" })
 @runInEditor
 export class UIFrame extends Laya.Script {
     private static _inst: UIFrame;

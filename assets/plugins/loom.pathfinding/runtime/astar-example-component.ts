@@ -6,6 +6,7 @@ import { astar } from "./astar-chunk-component";
 const { regClass, property } = Laya;
 
 @regClass()
+@Laya.classInfo({ menu: "loom/pathfinding" })
 export class AstarExampleComponent extends Laya.Script {
     declare owner: Laya.Sprite3D;
     @property({ type: AstarAgentComponent }) public agent: AstarAgentComponent | null = null;

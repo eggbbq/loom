@@ -3,6 +3,7 @@ import { ASTAR_CHUNKS_CHANGED, AstarChunkComponent } from "./astar-chunk-compone
 const { regClass, property } = Laya;
 
 @regClass()
+@Laya.classInfo({ menu: "loom/pathfinding" })
 export class AstarRuntimeDebugView extends Laya.Script {
     declare owner: Laya.Sprite3D;
 

@@ -7,6 +7,7 @@ enum CameraTag {
 
 
 @regClass()
+@Laya.classInfo({ menu: "loom/core" })
 export class CameraRef extends Laya.Script {
 
     private static _main:Laya.Camera;

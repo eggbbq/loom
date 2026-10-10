@@ -22,6 +22,7 @@ class StateEmpty implements IState {
 const EMPTY = new StateEmpty();
 
 @regClass()
+@Laya.classInfo({ menu: "loom/core" })
 export class StateManagerComponent extends Laya.Script {
 
     onDestroy(): void {

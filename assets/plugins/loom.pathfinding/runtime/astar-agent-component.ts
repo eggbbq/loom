@@ -34,6 +34,7 @@ export type AstarAgentEventData = {
 };
 
 @regClass()
+@Laya.classInfo({ menu: "loom/pathfinding" })
 export class AstarAgentComponent extends Laya.Script {
     declare owner: Laya.Sprite3D;
     @property({ type: Number, readonly: true }) agentId = 0;

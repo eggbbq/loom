@@ -1,7 +1,7 @@
 {
   "name": "loom.ui",
   "displayName": "Loom UI",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Runtime panel management, layers, navigation, lifecycle, animations, toast and tooltips for LayaAir.",
   "author": "eggbbq",
   "license": "MIT"

@@ -23,6 +23,7 @@ export type AstarBakeData = {
 
 @runInEditor
 @regClass()
+@Laya.classInfo({ menu: "loom/pathfinding" })
 export class AstarBakeComponent extends Laya.Script {
     declare owner: Laya.Sprite3D;
 

@@ -20,6 +20,7 @@ export const astar = {
 
 
 @regClass()
+@Laya.classInfo({ menu: "loom/pathfinding" })
 export class AstarChunkComponent extends Laya.Script {
 
     @property({ type: Number, tips: "区块尺寸", min: 1, step: 1 }) chunkSize = 64;
