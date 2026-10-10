@@ -7,12 +7,40 @@ const startupNamespaces = typeof loom === "undefined" ? {} : {
     ui: !!loom.ui?.open,
     pathfinding: !!loom.AStarGrid,
     sdk: !!loom.sdk?.init,
+    report: typeof loom.report?.to === "function",
 };
 const startupErrors: string[] = [];
-for (const name of ["core", "address", "bt", "i18n", "ui", "pathfinding", "sdk"]) {
+for (const name of ["core", "address", "bt", "i18n", "ui", "pathfinding", "sdk", "report"]) {
     if (!startupNamespaces[name as keyof typeof startupNamespaces]) startupErrors.push(`${name} unavailable at business module evaluation`);
 }
 try {
+    const channels = window as unknown as Record<string, unknown>;
+    const payload = { event: "startup" };
+    const callback = () => {};
+    let forwarded = false;
+    channels.__loomStartupReport = (...args: any[]) => {
+        if (args.length !== 4 || args[0] !== "startup" || args[1] !== payload || args[2] !== undefined
+            || args[3] !== callback) throw new Error("early report argument forwarding failed");
+        forwarded = true;
+    };
+    try {
+        loom.report.enabled = false;
+        if (loom.report.to("__loomStartupReport", "startup", payload, undefined, callback) !== false || forwarded)
+            throw new Error("early report disabled switch ignored");
+        loom.report.enabled = true;
+        loom.report.debug = true;
+        if (!loom.report.to("__loomStartupReport", "startup", payload, undefined, callback) || !forwarded)
+            throw new Error("early report execution failed");
+        loom.report.debug = false;
+        channels.__loomStartupReport = () => { throw new Error("Expected startup SDK failure"); };
+        if (loom.report.to("__loomStartupReport") !== false) throw new Error("early report sync failure escaped");
+        channels.__loomStartupReport = () => Promise.reject(new Error("Expected startup SDK rejection"));
+        if (loom.report.to("__loomStartupReport") !== true) throw new Error("early report async return changed");
+    } finally {
+        loom.report.enabled = true;
+        loom.report.debug = false;
+        delete channels.__loomStartupReport;
+    }
     loom.sdk.init();
     const bt = new loom.BTBuilder();
     const runner = new loom.BTRunner(bt.condition(() => true), {});

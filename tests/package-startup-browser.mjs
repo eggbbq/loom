@@ -14,7 +14,7 @@ window.__startupPageErrors=[];
 window.addEventListener('error',e=>window.__startupPageErrors.push(e.message));
 window.addEventListener('unhandledrejection',e=>window.__startupPageErrors.push(String(e.reason)));
 window.addEventListener('load',()=>setTimeout(()=>{
- const members={core:'ModuleBase',address:'address',bt:'BTBuilder',i18n:'i18n',ui:'ui',pathfinding:'AStarGrid',sdk:'sdk'};
+ const members={core:'ModuleBase',address:'address',bt:'BTBuilder',i18n:'i18n',ui:'ui',pathfinding:'AStarGrid',sdk:'sdk',report:'report'};
  const after=typeof loom==='undefined'?[]:Object.entries(members).filter(([,member])=>!!loom[member]).map(([name])=>name);
  const result={startup:window.__loomPackageStartup??null,afterMount:after,pageErrors:window.__startupPageErrors};
  const pre=document.createElement('pre');pre.id='package-startup-result';pre.textContent=JSON.stringify(result);document.body.appendChild(pre);
@@ -25,7 +25,7 @@ const previewHtml = await (await fetch(previewUrl)).text();
 const previewScripts = scriptSources(previewHtml);
 const mainIndex = previewScripts.indexOf('js/bundles/bundle.js');
 assert.ok(mainIndex >= 0, 'official preview main bundle must be present');
-for (const name of ['core', 'address', 'bt', 'i18n', 'ui', 'pathfinding']) {
+for (const name of ['core', 'address', 'bt', 'i18n', 'ui', 'pathfinding', 'report']) {
     const index = previewScripts.indexOf(jsMode ? `js/loom.${name}.runtime.js` : `js/packages/loom.${name}.js`);
     assert.ok(index >= 0 && index < mainIndex, `official preview must put loom.${name} before business`);
 }
@@ -36,7 +36,7 @@ if (jsMode) {
         ['Web', scriptSources(publishedHtml), 'js/bundle.js'],
     ]) {
         const before = scripts.indexOf(business);
-        for (const name of ['address', 'atlas', 'bt', 'core', 'i18n', 'pathfinding', 'ui']) {
+        for (const name of ['address', 'atlas', 'bt', 'core', 'i18n', 'pathfinding', 'ui', 'report']) {
             const index = scripts.indexOf(`js/loom.${name}.runtime.js`);
             assert.ok(index >= 0 && index < before, `${target}: loom.${name} must load before business`);
         }

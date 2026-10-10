@@ -86,6 +86,7 @@ for (const manifest of selected) {
             'loom.bt': ['installed-bt-probe.ts', 'InstalledBTProbe.verify', 'Installed BT:'],
             'loom.core': ['installed-core-probe.ts', 'InstalledCoreProbe.verify', 'Installed core:'],
             'loom.i18n': ['installed-i18n-probe.ts', 'InstalledI18nProbe.verify', 'Installed i18n:'],
+            'loom.report': ['installed-report-probe.ts', 'InstalledReportProbe.verify', 'Installed report:'],
             'loom.ui': ['installed-ui-probe.ts', 'InstalledUIProbe.verify', 'Installed UI:'],
             'loom.pathfinding': ['installed-pathfinding-probe.ts', 'InstalledPathfindingProbe.verify', 'Installed pathfinding:'],
         }[manifest.name];
@@ -146,6 +147,7 @@ for (const manifest of selected) {
             'loom.bt': 'const builder: api.BTBuilder = new loom.BTBuilder(); const runner = new api.BTRunner(builder.wait(0.1), {}); const status: api.BTStatus = runner.tick(0.1);',
             'loom.core': 'const notifier: api.Notifier = new loom.Notifier(); const manager = new api.ModuleManager(); const token = api.moduleToken<{ value: number }>("typed"); const value: number = manager.get(token)?.value ?? 0;',
             'loom.i18n': 'class Language extends api.LangBase { ok = "OK"; } const language = new Language(); language.translate(); const value: string = loom.i18n.gettext("ok");',
+            'loom.report': 'const channel: api.ReportChannel = (...args: any[]) => args; loom.report.enabled = true; api.report.debug = false; const forwarded: boolean = loom.report.to("analytics", "login", { userId: "123" }, undefined, channel); api.report.to("analytics");\n// @ts-expect-error: channel names must be strings.\nloom.report.to(123);\n// @ts-expect-error: service is not a function.\nloom.report("analytics");\n// @ts-expect-error: method is named to.\nloom.report.call("analytics");\n// @ts-expect-error: switches must be boolean.\nloom.report.debug = "true";',
             'loom.ui': 'const panel: api.UIPanel = new api.UIPanel(); const opened: Promise<Laya.GWidget> = loom.ui.open("resources/Panel.lh"); const manager: api.UIManager = loom.ui; loom.ui.defaultButtonSound = "resources/click.wav"; const ignore: api.UISoundIgnore = new loom.UISoundIgnore();',
             'loom.pathfinding': 'const grid: api.AStarGrid = new loom.AStarGrid({ width: 2, height: 2, walkable: new Uint8Array(4).fill(1) }); const reached: boolean = grid.findPath({ x: 0, y: 0 }, { x: 1, y: 1 }).reachedTarget;',
             'loom.address': 'const addresses: Promise<Record<string, string>> = loom.address.load();',

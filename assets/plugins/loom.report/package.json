@@ -1,0 +1,8 @@
+{
+  "name": "loom.report",
+  "displayName": "Loom Report",
+  "version": "1.0.0",
+  "description": "Forward analytics data to SDK adapter functions injected on window.",
+  "author": "eggbbq",
+  "license": "MIT"
+}

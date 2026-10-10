@@ -78,7 +78,8 @@ const cases = [];
 for (const [order, packages] of [['alphabetical', names], ['reversed', [...names].reverse()]]) {
     cases.push(await verifyOrder(order, packages));
 }
-const ready = cases.every(test => test.scene.ready && test.preview.startup?.ready && test.published.startup?.ready);
+const ready = cases.every(test => test.scene.ready && test.preview.startup?.ready && test.published.startup?.ready
+    && test.preview.pageErrors.length === 0 && test.published.pageErrors.length === 0);
 const report = { layaVersion: JSON.parse(readFileSync(path.join(projectRoot, projectFile), 'utf8')).version,
     businessHasImports: false, remotePackages: remoteMode, allTestedTargetsReady: ready, cases };
 const reportPath = path.join(projectRoot, `temp/verification-logs/${remoteMode ? 'remote-' : ''}${jsMode ? 'js-' : ''}package-startup.json`);
