@@ -1,6 +1,6 @@
 // Deliberately no imports: this is ordinary business code evaluated at module load.
 const startupNamespaces = typeof loom === "undefined" ? {} : {
-    core: !!loom.ModuleBase,
+    core: !!loom.ModuleBase && !!loom.notifier?.event,
     address: !!loom.address?.load,
     bt: !!loom.BTBuilder,
     i18n: !!loom.i18n?.gettext,
@@ -14,6 +14,11 @@ for (const name of ["core", "address", "bt", "i18n", "ui", "pathfinding", "sdk",
     if (!startupNamespaces[name as keyof typeof startupNamespaces]) startupErrors.push(`${name} unavailable at business module evaluation`);
 }
 try {
+    const message = loom.msg<number>("probe:startup-notifier");
+    let received = 0;
+    loom.notifier.once(message, value => { received = value; });
+    loom.notifier.event(message, 42);
+    if (received !== 42 || loom.notifier.hasListener(message)) throw new Error("early notifier execution failed");
     const channels = window as unknown as Record<string, unknown>;
     const payload = { event: "startup" };
     const callback = () => {};

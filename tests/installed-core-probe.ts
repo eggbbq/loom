@@ -1,4 +1,4 @@
-import { ModuleBase, ModuleManager, ModuleScope, moduleToken, Notifier, msg, ArchiveSystem, CoroutineRunner, WaitForSeconds, pool, CameraRef, Http } from "~/packages/loom.core";
+import { ModuleBase, ModuleManager, ModuleScope, moduleToken, Notifier, notifier as sharedNotifier, msg, ArchiveSystem, CoroutineRunner, WaitForSeconds, pool, CameraRef, Http } from "~/packages/loom.core";
 
 function check(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
 
@@ -6,6 +6,16 @@ function check(value: unknown, message: string): asserts value { if (!value) thr
 export class InstalledCoreProbe {
     static async verify(): Promise<void> {
         check(loom.ModuleBase === ModuleBase && loom.CameraRef === CameraRef && loom.pool === pool, "Core class or singleton identity differs");
+        check(loom.notifier === sharedNotifier && sharedNotifier instanceof Notifier, "Notifier singleton identity differs");
+        const sharedMessage = msg<number, number>("probe:shared-request");
+        const sharedListener = (value: number) => value * 2;
+        sharedNotifier.on(sharedMessage, sharedListener);
+        try {
+            check(await loom.notifier.request(sharedMessage, 21) === 42, "Global notifier cannot reach imported singleton listeners");
+            check(await new Notifier().request(sharedMessage, 21) === undefined, "New notifier shares singleton listeners");
+        } finally {
+            sharedNotifier.off(sharedMessage, sharedListener);
+        }
         const calls: string[] = [];
         const token = moduleToken<{ name: string }>("probe:core");
         class Probe extends ModuleBase {

@@ -78,8 +78,6 @@ export interface INotifier {
 }
 
 export class Notifier implements INotifier {
-    static readonly current: Notifier = new Notifier();
-
     private readonly m_events = new Map<string, ListenerGroup>();
     private readonly m_eventPool: Laya.Event[] = [];
 
@@ -334,3 +332,5 @@ export class Notifier implements INotifier {
         console.error(`[Notifier] Listener failed for event "${type}".`, error);
     }
 }
+
+export const notifier = new Notifier();

@@ -3,15 +3,18 @@
 独立 LayaAir 3.4.1 核心运行时插件，提供 core API：Module/Scope/token、Notifier、存档同步、协程、状态机、CameraRef、向量池、HTTP/RPC 与格式化、数组、数学、时间和 UI 工具。保留组件脚本 UUID，不包含业务资源或项目配置。
 
 ```ts
-import { ModuleBase, ModuleScope, moduleToken, Notifier } from "~/packages/loom.core";
+import { ModuleBase, ModuleScope, moduleToken, Notifier, notifier } from "~/packages/loom.core";
 
-const notifier = new loom.Notifier();
+const messages = loom.notifier; // 与导入的 notifier 是同一个共享实例。
+const localMessages = new Notifier(); // 需要独立消息通道时自行创建。
 const manager = loom.mods;
 const offset = loom.pool.v3.rent(1, 0, 2);
 loom.pool.v3.release(offset);
 ```
 
 包入口导出全部 API；公开成员直接挂载到 `loom`，与包导出共享同一组类和单例。入口加载时挂载，也处理引擎初始化与编辑器脚本重载；构建插件收集入口。其他插件和工程可以继续向同一 `loom` 对象添加自己的 API，宿主不要用同名 `globalName: "loom"` 脚本包覆盖它。
+
+共享消息实例通过 `loom.notifier` 或包导出的 `notifier` 访问；原 `Notifier.current` 已移除。
 
 保留 Node 的 `_uid`、`_data`、`setData` 扩展和原 `setData` 事件协议，安装幂等。存档通过原生 `Laya.LocalStorage` 读写，用户键、版本号和同步策略不变。`$env` 可由宿主设置；缺失时只建立关闭框架日志的默认值，不写入业务 appid 等配置。`format` 兼容别名指向 `loom.formatf`。
 
