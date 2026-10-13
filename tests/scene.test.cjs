@@ -4,11 +4,11 @@ const { test } = require('node:test');
 const { load } = require('./address-mapping-harness.cjs');
 
 const runtimeDir = path.join(__dirname, '../assets/plugins/loom.scene/runtime');
+const templateFile = path.join(__dirname, '../assets/plugins/loom.scene/editorResources/loom.scene/scene-hook.ts.txt');
 const entryFile = path.join(__dirname, '../assets/plugins/loom.scene/index.ts');
 function loadRuntime(globals) {
-    const hook = load(path.join(runtimeDir, 'scene-hook.ts'), globals);
-    const manager = load(path.join(runtimeDir, 'scene-manager.ts'), globals, { './scene-hook': hook });
-    return load(path.join(runtimeDir, 'scene-api.ts'), globals, { './scene-hook': hook, './scene-manager': manager });
+    const manager = load(path.join(runtimeDir, 'scene-manager.ts'), globals);
+    return load(path.join(runtimeDir, 'scene-api.ts'), globals, { './scene-types': {}, './scene-manager': manager });
 }
 function environment(native, useDefaults = false) {
     const calls = [];
@@ -18,11 +18,12 @@ function environment(native, useDefaults = false) {
     const loading = [];
     const Scene = { open: original, showLoadingPage: url => loading.push(['show', url]),
         hideLoadingPage: () => loading.push(['hide']) };
-    const globals = { window: {}, Laya: { Scene } };
+    const globals = { window: {}, Laya: { Scene, regClass: () => type => type, addBeforeInitCallback() {} } };
     const api = loadRuntime(globals);
-    api.scene.install();
-    if (!useDefaults) api.scene.hooks = {};
-    return { api, calls, opened, promise, original, Scene, globals, loading };
+    load(entryFile, globals, { './runtime/scene-api': api });
+    const projectHook = useDefaults ? load(templateFile, globals) : {};
+    if (useDefaults) api.scene.hooks = new projectHook.SceneHook();
+    return { SceneHook: projectHook.SceneHook, api, calls, opened, promise, original, Scene, globals, loading };
 }
 
 test('scene waits for the hook before the native call and preserves arguments and receiver', async () => {
@@ -118,7 +119,7 @@ test('scene accepts whole hook objects and preserves the in-flight object and de
     const defaults = service.hooks;
     assert.equal('defaultHooks' in service, false, 'default object is only exposed through hooks');
     assert.equal(service.hooks, defaults);
-    assert.ok(defaults instanceof env.api.SceneHook);
+    assert.ok(defaults instanceof env.SceneHook);
     assert.equal(service, env.api.SceneManager.inst);
     const defaultBefore = defaults.beforeOpen, defaultAfter = defaults.afterOpen;
     assert.equal(await env.Scene.open('Default.ls'), env.opened);
@@ -126,7 +127,7 @@ test('scene accepts whole hook objects and preserves the in-flight object and de
     let release;
     const gate = new Promise(resolve => { release = resolve; });
     const steps = [];
-    class CustomHooks extends env.api.SceneHook {
+    class CustomHooks extends env.SceneHook {
         async beforeOpen(url) {
             assert.equal(this, custom);
             steps.push(`before:${url}`);
@@ -175,7 +176,7 @@ test('default scene hooks wait for optional UI closure and continue when it fail
     const failure = Error('UI close failed');
     const errors = [];
     // 用独立模块环境收集默认钩子的日志，不改动其他测试的 console。
-    const hook = load(path.join(runtimeDir, 'scene-hook.ts'), { ...env.globals,
+    const hook = load(templateFile, { ...env.globals,
         console: { error: (...args) => errors.push(args) } });
     env.api.scene.hooks = new hook.SceneHook();
     for (const closeAll of [() => { throw failure; }, () => Promise.reject(failure)]) {
@@ -259,7 +260,7 @@ test('scene entry mounts before initialization and retains one wrapper/service a
         addBeforeInitCallback: callback => callbacks.push(callback) });
     const entry = load(entryFile, env.globals, { './runtime/scene-api': env.api });
     assert.equal(host.scene, entry.scene);
-    assert.equal(host.SceneHook, entry.SceneHook);
+    assert.equal('SceneHook' in entry, false, 'hook implementation belongs to the project');
     assert.equal(host.SceneManager, entry.SceneManager);
     assert.ok(host.ui);
     const wrapped = env.Scene.open;

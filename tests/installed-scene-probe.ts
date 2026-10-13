@@ -1,10 +1,11 @@
-import { scene, SceneHook, SceneManager, type ISceneHook } from "~/packages/loom.scene";
+import { SceneHook } from "./src/loom/scene/scene-hook";
+import { scene, SceneManager, type ISceneHook } from "~/packages/loom.scene";
 
 /** 只在隔离消费工程运行，验证实际安装包与原生资源加载。 */
 @IEditorEnv.regClass()
 export class InstalledSceneProbe {
     static async verify(): Promise<void> {
-        if (loom.scene !== scene || scene !== SceneManager.inst || loom.SceneManager !== SceneManager || loom.SceneHook !== SceneHook)
+        if (loom.scene !== scene || scene !== SceneManager.inst || loom.SceneManager !== SceneManager)
             throw new Error("Global scene/classes differ from package exports");
         const url = "resources/Scene.ls";
         const originalLoad = Laya.loader.load;
@@ -12,7 +13,9 @@ export class InstalledSceneProbe {
         const previousUI = (window.loom as any).ui;
         const hadUI = Object.prototype.hasOwnProperty.call(window.loom, "ui");
         const previousHooks = scene.hooks;
-        const defaultHooks = previousHooks;
+        if (previousHooks.beforeOpen || previousHooks.afterOpen || "SceneHook" in window.loom) throw new Error("Project hook must not register automatically");
+        SceneHook.register();
+        const defaultHooks = scene.hooks;
         if ("defaultHooks" in scene) throw new Error("Default object must only be exposed through hooks");
         if (!(defaultHooks instanceof SceneHook)) throw new Error("Default hooks must be a SceneHook instance");
         const defaultBefore = defaultHooks.beforeOpen;
@@ -130,7 +133,7 @@ export class InstalledSceneProbe {
             delete (window.loom as any).ui;
             opened.push(await Laya.Scene.open(url, false));
             if (loads !== beforeLoads + 3) throw new Error("Default hook requires the UI package");
-            console.log("Installed scene: SceneManager singleton, default SceneHook with optional UI closure/standalone operation, injected hooks identity, asynchronous before/after gates, native loading, parameter/callback overloads and error propagation passed.");
+            console.log("Installed scene: SceneManager singleton, manually injected project SceneHook with optional UI closure/standalone operation, injected hooks identity, asynchronous before/after gates, native loading, parameter/callback overloads and error propagation passed.");
         } finally {
             scene.hooks = previousHooks;
             Laya.loader.load = originalLoad;

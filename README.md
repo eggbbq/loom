@@ -40,9 +40,9 @@ CLI 3.4.1 的 Happy DOM 会对跨域下载额外发送 OPTIONS 请求，GitHub R
 
 各包以独立 JS 插件方式加载，将公开成员直接合并到 `loom`；服务对象通过 `loom.i18n`、`loom.ui`、`loom.address`、`loom.scene` 访问，保留编辑器重载恢复。Runtime JS 在 Laya 引擎之后、业务脚本之前执行，插件依赖同时通过 `pluginDependencies` 和 JS 插件 `.meta.references` 声明。在 LayaAir 3.4.1 的 Scene、官方预览和 Web 中，正序/倒序清单均通过业务顶层零 import 访问验证。API 挂载与资源、服务的异步初始化分别处理。完整验证见 [JS 安装包验证](docs/js-plugin-verification.md)。
 
-`loom.sdk` 是代码生成型编辑器插件：安装包只提供编辑器代码与 TypeScript 文本模板，不提供 SDK Runtime JS。安装后将 `.txt` 资源还原为项目 `src/loom/` 中的 `loom.sdk.ts`、声明与平台 JS，并提供独立 Laya 入口和提前加载的脚本包，由项目源码提供 `loom.sdk.init()` 等 API；升级不覆盖项目修改。
+`loom.sdk` 是代码生成型编辑器插件：安装包只提供编辑器代码与 TypeScript 文本模板，不提供 SDK Runtime JS。安装后将 `.txt` 资源还原为项目 `src/loom/sdk/` 中的 `loom.sdk.ts`、声明与平台 JS，并提供独立 Laya 入口和提前加载的脚本包，由项目源码提供 `loom.sdk.init()` 等 API；升级不覆盖项目修改。
 
-平台实现单独维护在 [platform](platform/README.md) TypeScript 子工程中，包含微信与抖音 SDK，拥有独立的依赖、检查、测试和构建。运行 `npm ci --prefix platform` 后，使用 `npm run platform:check` 或 `npm run platform:build`；产物为 `platform/dist/loom.wechat.js`、`loom.douyin.js` 和客户端声明。小游戏自行加载对应平台脚本，其全局 `__sdk` 会由项目中的 `loom.sdk` 适配器接入。该子工程不参与 Laya 脚本编译；`sh platform/scripts/build.sh` 将产物以“完整文件名 + `.txt`”复制为 `loom.sdk` 的编辑器资源，安装时还原到项目 `src/loom/`。
+平台实现单独维护在 [platform](platform/README.md) TypeScript 子工程中，包含微信与抖音 SDK，拥有独立的依赖、检查、测试和构建。运行 `npm ci --prefix platform` 后，使用 `npm run platform:check` 或 `npm run platform:build`；产物为 `platform/dist/loom.wechat.js`、`loom.douyin.js` 和客户端声明。小游戏自行加载对应平台脚本，其全局 `__sdk` 会由项目中的 `loom.sdk` 适配器接入。该子工程不参与 Laya 脚本编译；`sh platform/scripts/build.sh` 将产物以“完整文件名 + `.txt`”复制为 `loom.sdk` 的编辑器资源，安装时还原到项目 `src/loom/sdk/`。
 
 需要只使用全局 API 的 TypeScript 工程，可在 `tsconfig.json` 的 `include` 中追加 `"./library/packages/*/index.d.ts"`，保留原有条目。这只包含类型声明，不改变运行时执行顺序。工程不要设置 `globalName: "loom"` 覆盖共享全局对象。
 
@@ -105,6 +105,8 @@ platform/                  独立平台 SDK TypeScript 工程，含微信与抖�
 tests/                     插件功能测试
 release/plugins/           生成的安装包，Git 忽略
 ```
+
+代码生成型插件统一使用 `src/loom/<插件名>/`，例如 `scene/` 和 `sdk/`，实现、声明、入口与脚本包放在同一插件目录。
 
 ## 添加插件
 

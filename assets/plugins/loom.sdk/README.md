@@ -4,23 +4,23 @@
 
 ## 安装与生成
 
-执行 `./build.sh loom.sdk`，在目标工程的包管理器安装 `release/plugins/loom.sdk.layapkg`。首次加载将包内 `.txt` 文件复制到项目 `src/loom/`，只去掉最后的 `.txt`：
+执行 `./build.sh loom.sdk`，在目标工程的包管理器安装 `release/plugins/loom.sdk.layapkg`。首次加载将包内 `.txt` 文件复制到项目 `src/loom/sdk/`，只去掉最后的 `.txt`：
 
 | 包内文本资源 | 项目文件 |
 | --- | --- |
-| `loom.sdk.ts.txt` | `src/loom/loom.sdk.ts` |
-| `loom.sdk.d.ts.txt` | `src/loom/loom.sdk.d.ts` |
-| `loom.wechat.js.txt` | `src/loom/loom.wechat.js` |
-| `loom.douyin.js.txt` | `src/loom/loom.douyin.js` |
+| `loom.sdk.ts.txt` | `src/loom/sdk/loom.sdk.ts` |
+| `loom.sdk.d.ts.txt` | `src/loom/sdk/loom.sdk.d.ts` |
+| `loom.wechat.js.txt` | `src/loom/sdk/loom.wechat.js` |
+| `loom.douyin.js.txt` | `src/loom/sdk/loom.douyin.js` |
 
 同时创建：
 
-- `src/loom/loom.sdk.entry.ts`：独立 Laya 注册入口，导入适配器并挂载全局 `loom.sdk`。
-- `src/loom/loom.sdk.bundledef`：独立脚本包，在业务主包之前加载，支持业务顶层零 import 调用。
-- `assets/editorResources/loom.sdk/config.json`：生成路径配置，默认 `{ "output": "src/loom/loom.sdk.ts" }`。
+- `src/loom/sdk/loom.sdk.entry.ts`：独立 Laya 注册入口，导入适配器并挂载全局 `loom.sdk`。
+- `src/loom/sdk/loom.sdk.bundledef`：独立脚本包，在业务主包之前加载，支持业务顶层零 import 调用。
+- `assets/editorResources/loom.sdk/config.json`：生成路径配置，默认 `{ "output": "src/loom/sdk/loom.sdk.ts" }`。
 - `assets/editorResources/loom.sdk/loom.sdk.ts.txt`：项目自己的适配器模板。
 
-所有源码、声明和平台 JS 文件只在缺失时复制，内容保持原样。原生平台 JS 的 `.meta` 默认关闭自动导入，由小游戏入口选择加载微信或抖音脚本。重新生成、重载、升级和重新安装均不覆盖已有适配器、模板、配置、脚本包与 `.meta` UUID。直接修改 `src/loom/loom.sdk.ts` 即可定制；修改模板仅影响之后的新建适配器。若要重新从模板复制，删除适配器 `.ts`，保留 `.meta`、`.entry.ts` 与 `.bundledef`，再执行生成菜单。
+所有源码、声明和平台 JS 文件只在缺失时复制，内容保持原样。原生平台 JS 的 `.meta` 默认关闭自动导入，由小游戏入口选择加载微信或抖音脚本。重新生成、重载、升级和重新安装均不覆盖已有适配器、模板、配置、脚本包与 `.meta` UUID。直接修改 `src/loom/sdk/loom.sdk.ts` 即可定制；修改模板仅影响之后的新建适配器。若要重新从模板复制，删除适配器 `.ts`，保留 `.meta`、`.entry.ts` 与 `.bundledef`，再执行生成菜单。
 
 生成的 TS 在下一次 Laya 脚本编译时生效。IDE 会在文件创建后重新编译；CLI 工程请先执行下方 `LoomSDKPlugin.generate` 命令，再编译或运行使用 `loom.sdk` 的业务代码。首次安装的生成阶段不提供 SDK 运行时占位对象。
 
@@ -43,7 +43,7 @@ loom.sdk.login({
 
 生成器将模板原样复制到项目 TS，并在独立 `.entry.ts` 中提供 Laya 注册入口、`create()` 调用与加载/重载恢复代码。独立平台工程不依赖 Laya。默认实现通过全局 `__sdk` 接入微信、抖音平台代码，平台脚本应先于生成的适配器加载。`init(config)` 将配置写入宿主与 `globalThis.$env`；不传参数时使用 `create()` 时取得的 `$env / env`，缺失时采用空 appid 与 debug: false。项目可按需要修改生成的代码。
 
-旧默认适配器 `src/loom/sdk.ts` 会连同 `.meta` 和脚本包迁移为 `loom.sdk.ts`，保持定制内容与 UUID；已有目标文件时不覆盖。自定义 `config.output` 继续有效，其他文本资源仍还原到 `src/loom/`。
+旧默认适配器 `src/loom/sdk.ts` 或 `src/loom/loom.sdk.ts` 会连同入口、脚本包、声明、平台 JS 与 `.meta` 迁移到 `src/loom/sdk/`，保持定制内容与 UUID；已有目标文件时不覆盖。自定义 `config.output` 继续有效，配套文本资源生成在该输出文件所在目录。
 
 旧项目使用 `assets/editorResources/loom.sdk/sdk.txt` 或 `loom.sdk.txt` 时，首次加载将其及 `.meta` 重命名为 `loom.sdk.ts.txt`，保留内容和 UUID。新旧名称都存在时优先使用新文件，不覆盖任何已有文件或生成的适配器。
 

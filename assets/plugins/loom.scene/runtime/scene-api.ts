@@ -1,4 +1,4 @@
-export * from "./scene-hook";
+export * from "./scene-types";
 export * from "./scene-manager";
 
 import { SceneManager } from "./scene-manager";

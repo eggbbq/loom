@@ -8,7 +8,7 @@ const startupNamespaces = typeof loom === "undefined" ? {} : {
     pathfinding: !!loom.AStarGrid,
     sdk: !!loom.sdk?.init,
     report: typeof loom.report?.to === "function",
-    scene: !!loom.SceneHook && loom.scene === loom.SceneManager?.inst && loom.scene.hooks instanceof loom.SceneHook,
+    scene: !!loom.scene && loom.scene === loom.SceneManager?.inst && !loom.scene.hooks.beforeOpen && !loom.scene.hooks.afterOpen,
 };
 const startupErrors: string[] = [];
 for (const name of ["core", "address", "bt", "i18n", "ui", "pathfinding", "sdk", "report", "scene"]) {

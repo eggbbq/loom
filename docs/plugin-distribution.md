@@ -102,7 +102,7 @@ const offset = loom.pool.v3.rent(1, 0, 2);
 loom.pool.v3.release(offset);
 ```
 
-Core、BT、Pathfinding 和 UI 的公开类、枚举与工具直接挂载到 `loom`，不再使用 `loom.core`、`loom.bt`、`loom.pathfinding` 层级；`loom.address` 提供 `load` 和 `data`；`loom.i18n` 是翻译服务对象；`loom.ui` 是 UIManager 实例；`loom.report.to(channel, ...args)` 将业务数据转发到 window 上注册的 SDK 适配器函数；`loom.scene` 是 SceneManager 实例，`hooks` 初始为 SceneHook，可用实现 `ISceneHook` 的对象整体替换。默认场景钩子可选关闭已安装的 loom.ui 面板并调用 Loading 显示/隐藏方法，详见 [Loom Scene](../assets/plugins/loom.scene/README.md)。Atlas 自动接入子图映射和资源收集，没有 `loom.atlas` 命名空间。
+Core、BT、Pathfinding 和 UI 的公开类、枚举与工具直接挂载到 `loom`，不再使用 `loom.core`、`loom.bt`、`loom.pathfinding` 层级；`loom.address` 提供 `load` 和 `data`；`loom.i18n` 是翻译服务对象；`loom.ui` 是 UIManager 实例；`loom.report.to(channel, ...args)` 将业务数据转发到 window 上注册的 SDK 适配器函数；`loom.scene` 是 SceneManager 实例，安装时生成项目的 `src/loom/scene/scene-hook.ts` ，使用 `implements loom.ISceneHook`，由业务显式创建并注入 hooks，可用实现 `ISceneHook` 的对象整体替换。初始项目模板可选关闭已安装的 loom.ui 面板并调用 Loading 显示/隐藏方法，详见 [Loom Scene](../assets/plugins/loom.scene/README.md)。Atlas 自动接入子图映射和资源收集，没有 `loom.atlas` 命名空间。
 
 公开包入口仍支持显式导入，适合使用局部名称、继承类或引用类型：
 

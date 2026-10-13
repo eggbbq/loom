@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { projectRoot, projectFile, run, runLaya, startPreview } from './laya.mjs';
@@ -35,14 +35,14 @@ try {
     assert.ok(existsSync(path.join(installed, 'build~/bundle.editor.js')));
     assert.ok(!files.some(file => file.endsWith('.ts') && !file.endsWith('.d.ts')), 'no package TS implementation');
     assert.ok(files.filter(file => file.endsWith('.js')).every(file => path.dirname(file) === path.join(installed, 'build~')), 'only editor JS; no SDK runtime or JS bridges');
-    const adapter = path.join(consumer, 'src/loom/loom.sdk.ts');
+    const adapter = path.join(consumer, 'src/loom/sdk/loom.sdk.ts');
     const template = path.join(consumer, 'assets/editorResources/loom.sdk/loom.sdk.ts.txt');
     const configFile = path.join(consumer, 'assets/editorResources/loom.sdk/config.json');
     assert.ok(existsSync(adapter), 'installation generates default project TS');
     for (const file of ['loom.sdk.ts', 'loom.sdk.d.ts', 'loom.wechat.js', 'loom.douyin.js']) {
-        assert.equal(readFileSync(path.join(consumer, 'src/loom', file), 'utf8'), readFileSync(path.join(resources, file + '.txt'), 'utf8'));
+        assert.equal(readFileSync(path.join(consumer, 'src/loom/sdk', file), 'utf8'), readFileSync(path.join(resources, file + '.txt'), 'utf8'));
     }
-    const nativeFiles = ['loom.wechat.js', 'loom.douyin.js', 'loom.sdk.d.ts'].map(file => path.join(consumer, 'src/loom', file));
+    const nativeFiles = ['loom.wechat.js', 'loom.douyin.js', 'loom.sdk.d.ts'].map(file => path.join(consumer, 'src/loom/sdk', file));
     for (const file of nativeFiles) writeFileSync(file, readFileSync(file, 'utf8') + '\n// project customization retained\n');
     const nativeCopies = nativeFiles.map(file => ({ file, code: readFileSync(file, 'utf8'), meta: readFileSync(file + '.meta', 'utf8') }));
     const meta = readFileSync(adapter + '.meta', 'utf8');
@@ -50,7 +50,7 @@ try {
     writeFileSync(adapter, readFileSync(adapter, 'utf8') + '\n// project customization retained\n');
     writeFileSync(template, readFileSync(template, 'utf8') + '\n// project template customization retained\n');
     const edited = readFileSync(adapter, 'utf8');
-    const settings = '{ "output": "src/loom/loom.sdk.ts", "custom": true }\n';
+    const settings = '{ "output": "src/loom/sdk/loom.sdk.ts", "custom": true }\n';
     writeFileSync(configFile, settings);
     cli('LoomSDKPlugin.generate');
     cli('LoomSDKEditor.generate');
@@ -60,7 +60,15 @@ try {
     assert.equal(readFileSync(adapter.replace(/\.ts$/, '.bundledef'), 'utf8'), bundle);
     // Simulate a package reinstall; project sources, template and metadata remain untouched.
     rmSync(installed, { recursive: true, force: true });
+    // Simulate the previous release's flat output during the package upgrade.
+    for (const file of readdirSync(path.dirname(adapter)))
+        renameSync(path.join(path.dirname(adapter), file), path.join(consumer, 'src/loom', file));
+    rmSync(path.dirname(adapter), { recursive: true });
+    writeFileSync(configFile, JSON.stringify({ output: 'src/loom/loom.sdk.ts', custom: true }));
     cli('LoomSDKPlugin.generate');
+    assert.equal(JSON.parse(readFileSync(configFile, 'utf8')).output, 'src/loom/sdk/loom.sdk.ts');
+    assert.equal(JSON.parse(readFileSync(configFile, 'utf8')).custom, true);
+    assert.ok(!existsSync(path.join(consumer, 'src/loom/loom.sdk.ts')));
     assert.equal(readFileSync(adapter, 'utf8'), edited);
     assert.ok(readFileSync(template, 'utf8').includes('project template customization retained'));
     assert.equal(readFileSync(adapter + '.meta', 'utf8'), meta);

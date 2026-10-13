@@ -1,6 +1,6 @@
 const CONFIG = "assets/editorResources/loom.sdk/config.json";
 const TEMPLATE = "assets/editorResources/loom.sdk/loom.sdk.ts.txt";
-const DEFAULT_OUTPUT = "src/loom/loom.sdk.ts";
+const DEFAULT_OUTPUT = "src/loom/sdk/loom.sdk.ts";
 const LEGACY_TEMPLATES = ["assets/editorResources/loom.sdk/loom.sdk.txt", "assets/editorResources/loom.sdk/sdk.txt"];
 // 复制的源码保持原样；Laya 注册与启动放在独立入口。
 const LAYA_BOOTSTRAP = `import { create } from __SDK_IMPORT__;
@@ -87,10 +87,25 @@ export class LoomSDKPlugin {
         LoomSDKPlugin.ensureProjectFiles();
         const configPath = path.join(EditorEnv.projectPath, CONFIG);
         const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-        // 默认文件名升级：移动已有适配器及其元数据，保留项目定制实现。
-        if (config.output === "src/loom/sdk.ts") {
+        // 默认目录升级：连同入口、声明、平台脚本和元数据迁移，保留定制内容。
+        if (config.output === "src/loom/sdk.ts" || config.output === "src/loom/loom.sdk.ts") {
             const old = path.join(EditorEnv.projectPath, config.output), next = path.join(EditorEnv.projectPath, DEFAULT_OUTPUT);
-            const pairs = [[old, next], [old + ".meta", next + ".meta"], [old.replace(/\.ts$/, ".bundledef"), next.replace(/\.ts$/, ".bundledef")], [old.replace(/\.ts$/, ".bundledef.meta"), next.replace(/\.ts$/, ".bundledef.meta")]];
+            const pairs: string[][] = [];
+            for (const extension of [".ts", ".entry.ts", ".bundledef"])
+                for (const suffix of ["", ".meta"])
+                    pairs.push([old.replace(/\.ts$/, extension) + suffix, next.replace(/\.ts$/, extension) + suffix]);
+            const resources = LoomSDKPlugin.packageResources();
+            const collect = (folder: string, relative = ""): void => {
+                for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
+                    const name = relative + entry.name;
+                    if (entry.isDirectory()) { collect(path.join(folder, entry.name), name + "/"); continue; }
+                    if (!entry.isFile() || !name.endsWith(".txt") || name === "loom.sdk.ts.txt") continue;
+                    for (const suffix of ["", ".meta"]) pairs.push([
+                        path.join(EditorEnv.projectPath, "src/loom", name.slice(0, -4)) + suffix,
+                        path.join(path.dirname(next), name.slice(0, -4)) + suffix]);
+                }
+            };
+            collect(resources);
             if (pairs.every(([, destination]) => !fs.existsSync(destination))) {
                 for (const [from, to] of pairs) {
                     LoomSDKPlugin.safeOutput(to);
@@ -112,7 +127,7 @@ export class LoomSDKPlugin {
                 const name = relative + entry.name;
                 if (entry.isDirectory()) { copy(path.join(folder, entry.name), name + "/"); continue; }
                 if (!entry.isFile() || !name.endsWith(".txt")) continue;
-                const target = name === "loom.sdk.ts.txt" ? fullPath : path.join(EditorEnv.projectPath, "src/loom", name.slice(0, -4));
+                const target = name === "loom.sdk.ts.txt" ? fullPath : path.join(path.dirname(fullPath), name.slice(0, -4));
                 LoomSDKPlugin.safeOutput(target);
                 fs.mkdirSync(path.dirname(target), { recursive: true });
                 if (!fs.existsSync(target)) {

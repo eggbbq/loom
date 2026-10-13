@@ -71,6 +71,19 @@ for (const manifest of selected) {
             assert.equal(readFileSync(migratedConfig.legacy, 'utf8'), migratedConfig.content);
             checks.push('legacy config copied; original asset and UUID retained during imports');
         }
+        if (manifest.name === 'loom.scene') {
+            const hook = path.join(consumer, 'src/loom/scene/scene-hook.ts');
+            assert.equal(readFileSync(hook, 'utf8'), readFileSync(path.join(consumer, 'library/packages/loom.scene/editorResources/loom.scene/scene-hook.ts.txt'), 'utf8'));
+            assert.deepEqual(readdirSync(path.dirname(hook)).sort(), ['scene-hook.ts', 'scene-hook.ts.meta']);
+            assert.doesNotMatch(readFileSync(hook, 'utf8'), /@Laya\.regClass|\bimport\b|^\s*SceneHook\.register\(/m);
+            writeFileSync(hook, readFileSync(hook, 'utf8') + '\n// project-owned customization\n');
+            const copies = [hook, hook + '.meta'].map(file => ({ file, code: readFileSync(file, 'utf8') }));
+            cli('LoomSceneHookGenerator.generate');
+            rmSync(path.join(consumer, 'library/packages/loom.scene'), { recursive: true, force: true });
+            cli('LoomSceneHookGenerator.generate');
+            for (const copy of copies) assert.equal(readFileSync(copy.file, 'utf8'), copy.code);
+            checks.push('generated project hook without automatic registration', 'project edits and UUIDs preserved on reinstall');
+        }
         assert.ok(!existsSync(path.join(consumer, 'assets/plugins')));
         for (const name of names) {
             const files = walk(path.join(consumer, 'library/packages', name));
@@ -155,7 +168,7 @@ for (const manifest of selected) {
         }
         // Runtime assertion probes intentionally narrow mutable values; type-check separate business usage.
         const typedUsage = {
-            'loom.scene': 'const manager: api.SceneManager = loom.SceneManager.inst; const defaults: api.ISceneHook = new loom.SceneHook(); manager.hooks = defaults; const service: api.SceneService = loom.scene; const hook: api.ISceneHook["beforeOpen"] = async (url: string, param: any) => {}; const after: api.ISceneHook["afterOpen"] = async (url, param, openedScene) => { const value: Laya.Scene = openedScene; }; const hooks: api.ISceneHook = { beforeOpen: hook, afterOpen: after }; service.hooks = hooks; const current: api.ISceneHook = api.scene.hooks; api.scene.hooks = current; api.scene.hooks = {}; api.scene.hooks.beforeOpen = undefined; const opened: Promise<Laya.Scene> = Laya.Scene.open("resources/Scene.ls", true, { level: 1 }); Laya.Scene.open("resources/Scene.ls", false, (value: Laya.Scene) => {}, (value: number) => {});\n// @ts-expect-error: hooks must be functions.\nloom.scene.hooks.beforeOpen = "invalid";\n// @ts-expect-error: after hooks must be functions.\nloom.scene.hooks.afterOpen = "invalid";\n// @ts-expect-error: hooks must be a hook object.\nloom.scene.hooks = "invalid";\n// @ts-expect-error: service does not replace the scene opening API.\nloom.scene.open("resources/Scene.ls");',
+            'loom.scene': 'const manager: api.SceneManager = loom.SceneManager.inst; class ProjectHook implements loom.ISceneHook { beforeOpen(url: string, param: any): void {} } const projectHooks: loom.ISceneHook = new ProjectHook(); manager.hooks = projectHooks; const service: api.SceneService = loom.scene; const hook: api.ISceneHook["beforeOpen"] = async (url: string, param: any) => {}; const after: api.ISceneHook["afterOpen"] = async (url, param, openedScene) => { const value: Laya.Scene = openedScene; }; const hooks: api.ISceneHook = { beforeOpen: hook, afterOpen: after }; service.hooks = hooks; const current: api.ISceneHook = api.scene.hooks; api.scene.hooks = current; api.scene.hooks = {}; api.scene.hooks.beforeOpen = undefined; const opened: Promise<Laya.Scene> = Laya.Scene.open("resources/Scene.ls", true, { level: 1 }); Laya.Scene.open("resources/Scene.ls", false, (value: Laya.Scene) => {}, (value: number) => {});\n// @ts-expect-error: hooks must be functions.\nloom.scene.hooks.beforeOpen = "invalid";\n// @ts-expect-error: after hooks must be functions.\nloom.scene.hooks.afterOpen = "invalid";\n// @ts-expect-error: hooks must be a hook object.\nloom.scene.hooks = "invalid";\n// @ts-expect-error: service does not replace the scene opening API.\nloom.scene.open("resources/Scene.ls");',
             'loom.bt': 'const builder: api.BTBuilder = new loom.BTBuilder(); const runner = new api.BTRunner(builder.wait(0.1), {}); const status: api.BTStatus = runner.tick(0.1);',
             'loom.core': 'const notifier: api.Notifier = loom.notifier; const importedNotifier: api.INotifier = api.notifier; const localNotifier = new api.Notifier(); const manager = new api.ModuleManager(); const token = api.moduleToken<{ value: number }>("typed"); const value: number = manager.get(token)?.value ?? 0;',
             'loom.i18n': 'class Language extends api.LangBase { ok = "OK"; } const language = new Language(); language.translate(); const value: string = loom.i18n.gettext("ok");',

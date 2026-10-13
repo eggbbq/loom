@@ -19,29 +19,29 @@ test('SDK generator creates project-owned TS, preserves edits and UUIDs, and acc
     const generate = plugin.generate;
     try {
         assert.equal(generate.call(undefined).created, true);
-        const adapter = path.join(project, 'src/loom/loom.sdk.ts');
+        const adapter = path.join(project, 'src/loom/sdk/loom.sdk.ts');
         const template = path.join(project, 'assets/editorResources/loom.sdk/loom.sdk.ts.txt');
         const config = path.join(project, 'assets/editorResources/loom.sdk/config.json');
         const meta = fs.readFileSync(adapter + '.meta', 'utf8');
-        const bundle = path.join(project, 'src/loom/loom.sdk.bundledef');
+        const bundle = path.join(project, 'src/loom/sdk/loom.sdk.bundledef');
         const bundleSource = fs.readFileSync(bundle, 'utf8');
         assert.equal(JSON.parse(bundleSource).loadBeforeMain, true);
         assert.equal(JSON.parse(bundleSource).entries[0], 'res://' + JSON.parse(fs.readFileSync(adapter.replace(/\.ts$/, '.entry.ts.meta'), 'utf8')).uuid);
         assert.equal(fs.readFileSync(adapter, 'utf8'), fs.readFileSync(template, 'utf8'));
         assert.ok(fs.readFileSync(adapter.replace(/\.ts$/, '.entry.ts'), 'utf8').includes('class LoomSDKAdapterEntry'));
         for (const file of ['loom.sdk.d.ts', 'loom.wechat.js', 'loom.douyin.js']) {
-            const target = path.join(project, 'src/loom', file);
+            const target = path.join(project, 'src/loom/sdk', file);
             assert.equal(fs.readFileSync(target, 'utf8'), fs.readFileSync(path.join(source, 'editorResources/loom.sdk', file + '.txt'), 'utf8'));
             if (file.endsWith('.js')) assert.equal(JSON.parse(fs.readFileSync(target + '.meta', 'utf8')).importer.import, false);
         }
-        const native = path.join(project, 'src/loom/loom.wechat.js');
+        const native = path.join(project, 'src/loom/sdk/loom.wechat.js');
         fs.appendFileSync(native, '\n// customized native SDK\n');
         const nativeSource = fs.readFileSync(native, 'utf8'), nativeMeta = fs.readFileSync(native + '.meta', 'utf8');
         assert.ok(!fs.existsSync(adapter.replace(/\.ts$/, '.js')));
         fs.appendFileSync(adapter, '\n// customized project adapter\n');
         const edited = fs.readFileSync(adapter, 'utf8');
         fs.appendFileSync(template, '\n// customized project template\n');
-        const customConfig = '{ "output": "src/loom/loom.sdk.ts", "custom": true }\n';
+        const customConfig = '{ "output": "src/loom/sdk/loom.sdk.ts", "custom": true }\n';
         fs.writeFileSync(config, customConfig);
         plugin.onLoad();
         assert.equal(generate().created, false);
@@ -71,7 +71,7 @@ test('SDK generator creates project-owned TS, preserves edits and UUIDs, and acc
         fs.unlinkSync(template);
         globals.EditorEnv.assetMgr.getAsset = id => id === '9c595c89-6ef3-42ee-9601-4b6be51a933f' ? { file: 'editor/sdk-plugin.d.ts' } : undefined;
         globals.EditorEnv.assetMgr.getFullPath = () => path.join(source, 'editor/sdk-plugin.d.ts');
-        fs.writeFileSync(config, JSON.stringify({ output: 'src/loom/loom.sdk.ts' }));
+        fs.writeFileSync(config, JSON.stringify({ output: 'src/loom/sdk/loom.sdk.ts' }));
         assert.equal(generate().created, false);
         assert.equal(fs.readFileSync(template, 'utf8'), fs.readFileSync(path.join(source, 'editorResources/loom.sdk/loom.sdk.ts.txt'), 'utf8'));
     } finally { fs.rmSync(project, { recursive: true, force: true }); }
@@ -94,8 +94,8 @@ function adapterRuntime(native = {}, gameGlobal = false) {
     };
     if (gameGlobal) globals.GameGlobal = { loom: shared, __sdk: native };
     try {
-        const core = load(path.join(project, 'src/loom/loom.sdk.ts'), globals);
-        const api = load(path.join(project, 'src/loom/loom.sdk.entry.ts'), globals, { './loom.sdk': core });
+        const core = load(path.join(project, 'src/loom/sdk/loom.sdk.ts'), globals);
+        const api = load(path.join(project, 'src/loom/sdk/loom.sdk.entry.ts'), globals, { './loom.sdk': core });
         return { ...api, shared, window, reloads, initializers };
     } finally { fs.rmSync(project, { recursive: true, force: true }); }
 }
@@ -147,45 +147,55 @@ test('SDK generator migrates customized legacy template and its UUID without rep
         assert.equal(fs.readFileSync(next, 'utf8'), content);
         assert.equal(JSON.parse(fs.readFileSync(next + '.meta', 'utf8')).uuid, 'project-template-id');
         assert.equal(fs.existsSync(old), false);
-        assert.ok(fs.readFileSync(path.join(project, 'src/loom/loom.sdk.ts'), 'utf8').startsWith(content));
+        assert.ok(fs.readFileSync(path.join(project, 'src/loom/sdk/loom.sdk.ts'), 'utf8').startsWith(content));
         fs.writeFileSync(old, '// another legacy template');
         generator.generate();
         assert.equal(fs.readFileSync(next, 'utf8'), content);
         assert.equal(fs.readFileSync(old, 'utf8'), '// another legacy template');
         // The previous shipped template already has its own Laya entry and singleton.
-        const legacyAdapter = fs.readFileSync(fs.existsSync('src/loom/loom.sdk.ts') ? 'src/loom/loom.sdk.ts' : 'src/loom/sdk.ts', 'utf8');
+        const legacyAdapter = fs.readFileSync('src/loom/sdk/loom.sdk.ts', 'utf8');
         fs.writeFileSync(next, legacyAdapter);
-        fs.unlinkSync(path.join(project, 'src/loom/loom.sdk.ts'));
+        fs.unlinkSync(path.join(project, 'src/loom/sdk/loom.sdk.ts'));
         generator.generate();
-        assert.equal(fs.readFileSync(path.join(project, 'src/loom/loom.sdk.ts'), 'utf8'), legacyAdapter);
+        assert.equal(fs.readFileSync(path.join(project, 'src/loom/sdk/loom.sdk.ts'), 'utf8'), legacyAdapter);
     } finally { fs.rmSync(project, { recursive: true, force: true }); }
 });
 
 
-test('SDK generator migrates the old default adapter and bundle with stable UUIDs', () => {
+for (const basename of ['sdk', 'loom.sdk']) test(`SDK generator migrates ${basename} and related files into its directory with stable UUIDs`, () => {
     const project = fs.mkdtempSync(path.join(os.tmpdir(), 'loom-sdk-path-'));
     try {
         const folder = path.join(project, 'src/loom');
         fs.mkdirSync(folder, { recursive: true });
-        const adapter = fs.readFileSync(fs.existsSync('src/loom/loom.sdk.ts') ? 'src/loom/loom.sdk.ts' : 'src/loom/sdk.ts', 'utf8');
-        fs.writeFileSync(path.join(folder, 'sdk.ts'), adapter);
-        fs.writeFileSync(path.join(folder, 'sdk.ts.meta'), '{"uuid":"existing-adapter"}');
+        const adapter = fs.readFileSync('src/loom/sdk/loom.sdk.ts', 'utf8');
+        fs.writeFileSync(path.join(folder, basename + '.ts'), adapter);
+        fs.writeFileSync(path.join(folder, basename + '.ts.meta'), '{"uuid":"existing-adapter"}');
         const bundle = '{"entries":["res://existing-adapter"],"loadBeforeMain":true}';
-        fs.writeFileSync(path.join(folder, 'sdk.bundledef'), bundle);
-        fs.writeFileSync(path.join(folder, 'sdk.bundledef.meta'), '{"uuid":"existing-bundle"}');
+        fs.writeFileSync(path.join(folder, basename + '.bundledef'), bundle);
+        fs.writeFileSync(path.join(folder, basename + '.bundledef.meta'), '{"uuid":"existing-bundle"}');
         const config = path.join(project, 'assets/editorResources/loom.sdk/config.json');
         fs.mkdirSync(path.dirname(config), { recursive: true });
-        fs.writeFileSync(config, '{"output":"src/loom/sdk.ts","custom":true}');
+        fs.writeFileSync(config, JSON.stringify({ output: `src/loom/${basename}.ts`, custom: true }));
+        for (const file of ['loom.sdk.d.ts', 'loom.wechat.js', 'loom.douyin.js', basename + '.entry.ts']) {
+            fs.writeFileSync(path.join(folder, file), '// custom ' + file);
+            fs.writeFileSync(path.join(folder, file + '.meta'), JSON.stringify({ uuid: 'id-' + file }));
+        }
         const { LoomSDKPlugin: generator } = load(path.join(source, 'editor/sdk-plugin.ts'), {
             IEditorEnv: { regClass: () => type => type, onLoad() {}, require },
             EditorEnv: { projectPath: project, assetMgr: { getAsset: () => ({}), getFullPath: () => path.join(source, 'editorResources/loom.sdk/loom.sdk.ts.txt') } },
         });
         assert.equal(generator.generate().created, false);
-        assert.equal(fs.readFileSync(path.join(folder, 'loom.sdk.ts'), 'utf8'), adapter);
-        assert.equal(JSON.parse(fs.readFileSync(path.join(folder, 'loom.sdk.ts.meta'), 'utf8')).uuid, 'existing-adapter');
-        assert.equal(fs.readFileSync(path.join(folder, 'loom.sdk.bundledef'), 'utf8'), bundle);
-        assert.equal(JSON.parse(fs.readFileSync(path.join(folder, 'loom.sdk.bundledef.meta'), 'utf8')).uuid, 'existing-bundle');
-        assert.equal(fs.existsSync(path.join(folder, 'sdk.ts')), false);
+        assert.equal(fs.readFileSync(path.join(folder, 'sdk/loom.sdk.ts'), 'utf8'), adapter);
+        assert.equal(JSON.parse(fs.readFileSync(path.join(folder, 'sdk/loom.sdk.ts.meta'), 'utf8')).uuid, 'existing-adapter');
+        assert.equal(fs.readFileSync(path.join(folder, 'sdk/loom.sdk.bundledef'), 'utf8'), bundle);
+        assert.equal(JSON.parse(fs.readFileSync(path.join(folder, 'sdk/loom.sdk.bundledef.meta'), 'utf8')).uuid, 'existing-bundle');
+        assert.equal(fs.existsSync(path.join(folder, basename + '.ts')), false);
         assert.equal(JSON.parse(fs.readFileSync(config, 'utf8')).custom, true);
+        for (const file of ['loom.sdk.d.ts', 'loom.wechat.js', 'loom.douyin.js', 'loom.sdk.entry.ts']) {
+            const original = file === 'loom.sdk.entry.ts' ? basename + '.entry.ts' : file;
+            assert.equal(fs.readFileSync(path.join(folder, 'sdk', file), 'utf8'), '// custom ' + original);
+            assert.equal(JSON.parse(fs.readFileSync(path.join(folder, 'sdk', file + '.meta'), 'utf8')).uuid, 'id-' + original);
+            assert.equal(fs.existsSync(path.join(folder, original)), false);
+        }
     } finally { fs.rmSync(project, { recursive: true, force: true }); }
 });

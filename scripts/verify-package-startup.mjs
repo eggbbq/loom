@@ -38,6 +38,7 @@ async function verifyOrder(order, packageNames) {
         writeFileSync(path.join(consumer, 'packages/manifest.json'), JSON.stringify({ dependencies }, null, 2));
         // A code-generator package first creates the project source. Compile the business
         // fixture only after that installation step, as in an IDE project using its adapter.
+        if (packageNames.includes('loom.scene')) runLaya(['run', '--project', consumer, '--script=LoomSceneHookGenerator.generate']);
         if (packageNames.includes('loom.sdk')) runLaya(['run', '--project', consumer, '--script=LoomSDKPlugin.generate']);
         const probeId = randomUUID();
         const businessFile = path.join(projectRoot, 'tests/package-startup-business.ts');

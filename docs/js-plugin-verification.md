@@ -28,14 +28,14 @@
 | i18n | 存储、服务与类引用一致性、字典替换、重复手动翻译 |
 | pathfinding | core 依赖与导入身份、固定网格/跨 chunk/负坐标、动态障碍、最近可达、平滑、Scene 烘焙、UI 资源库写入 |
 | ui | 面板导航/缓存/生命周期/提示；Chromium 中真实 Preview/Web prefab UUID 绑定、打开/刷新/关闭 |
-| scene | SceneManager 单例与全局/导入类身份一致；hooks 初始为 SceneHook 实例，整体注入保留对象引用；beforeOpen 等待期间不发起原生资源加载，原生打开与 complete 后等待 afterOpen；参数/场景实例与回调重载透传，前置失败阻止加载、后置失败保留已打开场景 |
+| scene | SceneManager 单例与全局/导入类身份一致；安装仅生成项目 SceneHook，不自动注册，手动注入生效，重装保留代码及 UUID；整体注入保留对象引用；beforeOpen 等待期间不发起原生资源加载，原生打开与 complete 后等待 afterOpen；参数/场景实例与回调重载透传，前置失败阻止加载、后置失败保留已打开场景 |
 | tables | 仅安装 JS 包后创建项目模板；schema 后生成时创建适配器；自定义模板、UUID 保留、Scene 恢复同一实例；Chromium 中官方 Preview/Web 业务顶层零 import 访问实例 |
 
 每个包另行检查：无实现 TS、UUID 无重复、TypeScript 公开 API 声明能正常编译且拒绝不存在的成员、独立 Web 构建。core/bt/ui 的代表性组件在原生编辑器类型注册表中保留原始 UUID 与描述。
 
-2026-10-13 新增 `loom.scene` 1.0.0，源码按 SceneHook、SceneManager 和 scene-api 拆分，钩子接口为 `ISceneHook`。默认钩子验证等待可选 UI 关闭、无 UI 独立运行；源码测试覆盖 UI 关闭抛错/拒绝后继续打开场景及 Loading 显示/隐藏调用。仓库发布版本为 `v0.7.0`。`npm run build`、`npm run verify:js -- --skip-build`、`npm run verify:remote -- --local --skip-build` 和 `npm run build:web` 均通过，覆盖全部十个分发插件及 HTTP 安装。Scene、官方 Preview 与 Web 在正序/倒序安装下，业务模块顶层无 import 即可注册场景钩子并调用 `Laya.Scene.open`；启动探针通过异步前置拒绝验证原生加载被阻止。原生成功打开及 afterOpen 等待顺序由独立安装的 Scene 探针验证；未将这一项作为浏览器中场景成功打开的覆盖证明。
+2026-10-13 新增 `loom.scene` 1.0.0，插件只提供契约与 SceneManager，SceneHook 作为文本模板生成到项目 src/loom/scene 下，钩子接口为 `ISceneHook`。手动注入的项目钩子验证等待可选 UI 关闭、无 UI 独立运行；源码测试覆盖 UI 关闭抛错/拒绝后继续打开场景及 Loading 显示/隐藏调用。仓库发布版本为 `v0.7.0`。`npm run build`、`npm run verify:js -- --skip-build`、`npm run verify:remote -- --local --skip-build` 和 `npm run build:web` 均通过，覆盖全部十个分发插件及 HTTP 安装。Scene、官方 Preview 与 Web 在正序/倒序安装下，业务模块顶层无 import 即可注册场景钩子并调用 `Laya.Scene.open`；启动探针通过异步前置拒绝验证原生加载被阻止。原生成功打开及 afterOpen 等待顺序由独立安装的 Scene 探针验证；未将这一项作为浏览器中场景成功打开的覆盖证明。
 
-正序和倒序清单中，**Scene、官方 Preview、Web 都在零 import 的业务模块顶层之前提供九个包的 loom API**。Core、BT、Pathfinding、UI 和 Scene 的公开类与工具直接挂载到 `loom`，服务通过 `loom.address`、`loom.i18n`、`loom.ui`、`loom.report`、`loom.scene` 访问，SDK 项目适配器提供 `loom.sdk`。atlas 不提供 loom.atlas，但参与加载与资源发布。两种浏览器页面均断言全部 runtime.js 在业务 bundle 之前，core 在 pathfinding 之前。真实页面没有脚本重排。类型通过 include 的 index.d.ts 提供。
+正序和倒序清单中，**Scene、官方 Preview、Web 都在零 import 的业务模块顶层之前提供九个包的 loom API**。Core、BT、Pathfinding、UI 和 Scene 的公开类与工具直接挂载到 `loom`，服务通过 `loom.address`、`loom.i18n`、`loom.ui`、`loom.report`、`loom.scene` 访问，SDK 项目适配器提供 `loom.sdk`。atlas 不提供 loom.atlas，但参与加载与资源发布。两种浏览器页面均断言全部 runtime.js 在业务 bundle 之前，core 在 pathfinding 之前。真实页面没有脚本重排。类型通过 include 的 index.d.ts 提供。Scene 钩子只生成普通类，由业务显式注入，使用 `implements loom.ISceneHook`，安装后的类型检查覆盖这一用法。Scene 与 SDK 的项目生成代码分别放在 `src/loom/scene/` 和 `src/loom/sdk/`；独立目录避免 Laya 将同目录或父目录中的其他脚本包入口归入同一编译单元。SDK 升级迁移在实际安装工程中验证，保留适配器、入口、声明、平台 JS 与元数据。
 
 `tables` 是后加入的项目适配插件，使用独立的 `verify:tables` 验证：包不引用项目 schema，安装后生成的 TS 和 `loadBeforeMain` bundle 将 `Tables` 实例挂到 `loom.tables`；准确的全局类型来自项目适配器。验证使用实际安装包、消费工程生成的表代码和官方脚本加载顺序，不加载表数据。此前七包的正序/倒序验证记录不代表存在 schema 时的 Tables 适配器验证；全量 JS 功能验证另行调用此安装测试。
 
