@@ -18,21 +18,21 @@ Node.js 要求 20 或更新版本。安装官方 LayaAir CLI 后，执行 `layaa
 
 执行 `npm run build`，在目标工程的包管理器中分别安装需要的 `release/plugins/loom.<插件名>.layapkg`。插件之间通过 `pluginDependencies` 声明真实依赖，不使用统一的 `loom.bundledef` 或源码复制入口。
 
-构建同时生成 `release/plugins/manifest.json`（远程安装 URL）、`distribution.json`（各插件版本与校验值）和 `SHA256SUMS`。默认下载地址为本仓库 GitHub Releases 的 `v0.5.0`；可用 `LOOM_RELEASE_TAG` 指定新的发布标签。安装包上传到 Release 附件，构建产物继续由 Git 忽略。
+构建同时生成 `release/plugins/manifest.json`（远程安装 URL）、`distribution.json`（各插件版本与校验值）和 `SHA256SUMS`。默认下载地址为本仓库 GitHub Releases 的 `v0.6.0`；可用 `LOOM_RELEASE_TAG` 指定新的发布标签。安装包上传到 Release 附件，构建产物继续由 Git 忽略。
 
 安装包文件名固定，例如 `loom.bt.layapkg`。URL 中的 Release tag 区分发布批次；本地重复构建使用相同 tag 时，URL 也相同，不会自动创建 Git tag。新命名用于后续 Release，已发布的 v0.1.1 仍使用原来的带版本号附件。
 
-在消费工程的 `packages/manifest.json` 中合并所需插件的依赖项，例如安装 `v0.5.0` 中的 BT 插件：
+在消费工程的 `packages/manifest.json` 中合并所需插件的依赖项，例如安装 `v0.6.0` 中的 BT 插件：
 
 ```json
 {
   "dependencies": {
-    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.5.0/loom.bt.layapkg"
+    "loom.bt": "https://github.com/eggbbq/loom/releases/download/v0.6.0/loom.bt.layapkg"
   }
 }
 ```
 
-安装全部插件可使用 Release 附件中的 [manifest.json](https://github.com/eggbbq/loom/releases/download/v0.5.0/manifest.json)，保留工程已有依赖。需要 core 的 pathfinding 应同时添加两包的 URL。首次安装不要使用 `--skip-package-install`。Git 仓库地址不作为安装源。
+安装全部插件可使用 Release 附件中的 [manifest.json](https://github.com/eggbbq/loom/releases/download/v0.6.0/manifest.json)，保留工程已有依赖。需要 core 的 pathfinding 应同时添加两包的 URL。首次安装不要使用 `--skip-package-install`。Git 仓库地址不作为安装源。
 
 CLI 3.4.1 的 Happy DOM 会对跨域下载额外发送 OPTIONS 请求，GitHub Release 不接受该预检。本仓库的 CLI 包装脚本仅对 `.layapkg` 下载使用 curl，保留官方安装与编译流程；例如 `node scripts/laya.mjs build web --project /path/to/game` 可协调目标工程中的远程包。此兼容层只用于 CLI，不随插件分发，也不修改 IDE 或引擎文件。
 
@@ -125,7 +125,7 @@ release/plugins/           生成的安装包，Git 忽略
 - [loom.pathfinding](assets/plugins/loom.pathfinding/README.md)：网格与区块 A*、编辑器烘焙、动态障碍、移动 Agent 和路径平滑；声明依赖 loom.core。
 - [loom.sdk](assets/plugins/loom.sdk/README.md)：向项目生成可自行修改的第三方小游戏 SDK TypeScript 适配器，支持 `loom.sdk.init()`，不内置 SDK Runtime JS。
 - [loom.report](assets/plugins/loom.report/README.md)：通过 `loom.report.to(channel, ...args)` 将埋点参数原样转发给注册在 `window[channel]` 上的 SDK 适配器函数，提供 `enabled` 转发开关和 `debug` 调试开关。
-- [loom.ui](assets/plugins/loom.ui/README.md)：面板管理、导航、生命周期代理、动画、按钮音效、关闭按钮和可配置提示。
+- [loom.ui](assets/plugins/loom.ui/README.md)：面板管理、导航、生命周期代理、动画、按钮音效、关闭按钮、可配置提示和基于 UIPanel 的确认对话框。
 
 ## 许可证
 

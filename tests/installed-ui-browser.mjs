@@ -70,6 +70,53 @@ ${['laya.core', 'laya.d3', 'laya.webgl_2D', 'laya.webgl_3D', 'laya.ui2'].map(nam
   check(owner===same && owner.data.value===43,'native prefab cache/refresh failed');
   await loom.ui.close(owner,false);
   check(!owner.parent,'native prefab close failed');
+  check(loom.dialog===loom.UIDialogManager.inst,'dialog singleton export mismatch');
+  owner.getComponent(UIPanel).layer=loom.UILayer.Top;
+  owner.getComponent(UIPanel).nav=loom.UINavMode.Default;
+  await loom.ui.open('/fixtures/Panel.lh',null,false);
+  const cachedDialog=await loom.ui.open('/fixtures/Dialog.lh',null,false);
+  check(cachedDialog.getComponent(UIPanel).layer===loom.UILayer.Top,'serialized dialog UIPanel layer lost');
+  await loom.ui.close(cachedDialog,false);
+  let refreshCalls=0;
+  cachedDialog.refresh=()=>refreshCalls++;
+  const dialogs=new loom.UIDialogManager('/fixtures/Dialog.lh');
+  const displayed=async parent=>{
+   for(let i=0;i<50;i++){
+    const node=parent.getChildByName('Dialog');
+    if(node)return node;
+    await new Promise(resolve=>setTimeout(resolve,10));
+   }
+   throw Error('dialog did not appear');
+  };
+  const first=dialogs.confirm('first');
+  const second=new loom.UIDialogManager('/fixtures/Dialog.lh').confirm({text:'second',title:'Confirm'});
+  const dialog=await displayed(UIFrame.inst.top);
+  check(dialog===cachedDialog && dialog.data.text==='first' && refreshCalls===1,'dialog did not reuse UIManager cache/refresh');
+  check(!owner.active,'dialog did not participate in UIPanel navigation');
+  check(!(dialog instanceof Laya.GWindow),'dialog must be a GWidget with UIPanel');
+  dialog.data.onConfirm();
+  check(await first===true,'confirmation did not resolve true');
+  check(await displayed(UIFrame.inst.top)===dialog && dialog.data.text==='second' && refreshCalls===2,'shared-address dialog queue failed');
+  dialog.data.onCancel();
+  check(await second===false && !dialog.parent && owner.active,'cancellation did not close/restore navigation');
+  check(!dialog.hasListener('confirm') && !dialog.hasListener('cancel'),'dialog result listeners leaked');
+  const closed=dialogs.confirm('closed');
+  await displayed(UIFrame.inst.top);
+  await loom.ui.waitPanelOptionComplete();
+  dialog.getComponent(UIPanel).close();
+  check(await closed===false && !dialog.parent,'UIPanel.close did not cancel dialog');
+  const allClosed=dialogs.confirm('close all');
+  await displayed(UIFrame.inst.top);
+  await loom.ui.waitPanelOptionComplete();
+  await loom.ui.closeAll();
+  check(await allClosed===false,'UIManager.closeAll did not cancel dialog');
+  loom.ui.disposeOnSceneChanged();
+  check(dialog.destroyed,'dialog Scene lifecycle did not release cached node');
+  const recreated=dialogs.confirm('recreated');
+  const recreatedNode=await displayed(UIFrame.inst.top);
+  check(recreatedNode!==dialog,'dialog did not recreate after Scene disposal');
+  dialogs.close();
+  check(await recreated===false,'manager close did not cancel recreated dialog');
   document.body.appendChild(document.createElement('pre')).textContent='NATIVE_UI_BROWSER_PASSED';
  } catch(error) { document.body.appendChild(document.createElement('pre')).textContent='NATIVE_UI_BROWSER_FAILED: '+error.stack; }
 })();
@@ -79,8 +126,12 @@ const fixture = JSON.stringify({ _$ver: 1, _$id: 'fixture', _$type: 'GWidget', n
     _$child: [{ _$id: 'muted', _$type: 'GButton', name: 'Muted', _$comp: [{ _$type: soundIgnore,
         scriptPath: '~/packages/loom.ui/runtime/ui-sound-ignore.' + (jsMode ? 'd.ts' : 'ts') }] }] });
 const server = createServer((req, res) => {
-    if (req.url.startsWith('/native-ui.html')) { res.setHeader('Content-Type', 'text/html'); res.end(req.url.includes('published') ? html.replace(runtimePath, jsMode ? '/release/web/js/loom.ui.runtime.js' : '/release/web/js/bundle.js').replaceAll(panel, compress(panel)).replaceAll(soundIgnore, compress(soundIgnore)).replaceAll('32cdfef6-44bf-4a87-8225-1fb11b3c85a4', compress('32cdfef6-44bf-4a87-8225-1fb11b3c85a4')).replaceAll('/fixtures/Panel.lh', '/release/web/resources/Panel.lh') : html); return; }
+    if (req.url.startsWith('/native-ui.html')) { res.setHeader('Content-Type', 'text/html'); res.end(req.url.includes('published') ? html.replace(runtimePath, jsMode ? '/release/web/js/loom.ui.runtime.js' : '/release/web/js/bundle.js').replaceAll(panel, compress(panel)).replaceAll(soundIgnore, compress(soundIgnore)).replaceAll('32cdfef6-44bf-4a87-8225-1fb11b3c85a4', compress('32cdfef6-44bf-4a87-8225-1fb11b3c85a4')).replaceAll('/fixtures/Panel.lh', '/release/web/resources/Panel.lh').replaceAll('/fixtures/Dialog.lh', '/release/web/resources/Dialog.lh') : html); return; }
     if (req.url === '/fixtures/Panel.lh') { res.setHeader('Content-Type', 'application/json'); res.end(fixture); return; }
+    if (req.url === '/fixtures/Dialog.lh') { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({
+        _$ver: 1, _$id: 'dialog-fixture', _$type: 'GWidget', name: 'Dialog', width: 120, height: 80,
+        _$comp: [{ _$type: panel, scriptPath: '~/packages/loom.ui/runtime/ui-panel.' + (jsMode ? 'd.ts' : 'ts'),
+            layer: 'top', anim: 0, life: 1, nav: 'hide-other' }] })); return; }
     const file = path.resolve(consumer, '.' + new URL(req.url, 'http://local').pathname);
     if (!file.startsWith(path.resolve(consumer) + path.sep) || !existsSync(file)) { res.statusCode = 404; res.end(); return; }
     res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' : 'application/octet-stream');
@@ -99,6 +150,6 @@ try {
     });
     assert.equal(result.code, 0, result.stderr);
     assert.ok(result.stdout.includes('<pre>NATIVE_UI_BROWSER_PASSED</pre>'), result.stdout + result.stderr);
-    console.log(`Native Chromium + Laya engine (${mode}): onClick hook, delayed buttons, default/native/mute, callback removal and prefab UUID/open/refresh/close passed.`);
+    console.log(`Native Chromium + Laya engine (${mode}): onClick hook, prefab UUID/open/refresh/close and dialog UIPanel confirmation/cancel/queue/cache/layers/navigation/closeAll/Scene disposal passed.`);
     }
 } finally { await new Promise(resolve => server.close(resolve)); rmSync(profile, { recursive: true, force: true }); }

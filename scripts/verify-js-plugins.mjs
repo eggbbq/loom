@@ -141,6 +141,10 @@ for (const manifest of selected) {
                 _$comp: [{ _$type: 'b0c345c4-9c3a-4c6a-883b-f6b19d06102f', scriptPath: '~/packages/loom.ui/runtime/ui-panel.d.ts', anim: 0, center: false, life: 1 }],
                 _$child: [{ _$id: 'muted', _$type: 'GButton', name: 'Muted', _$comp: [{
                     _$type: 'eb88d8e2-4e80-4d1e-8b55-daf031159a76', scriptPath: '~/packages/loom.ui/runtime/ui-sound-ignore.d.ts' }] }] }));
+            writeFileSync(path.join(consumer, 'assets/resources/Dialog.lh'), JSON.stringify({
+                _$ver: 1, _$id: 'dialog-fixture', _$type: 'GWidget', name: 'Dialog', width: 120, height: 80,
+                _$comp: [{ _$type: 'b0c345c4-9c3a-4c6a-883b-f6b19d06102f', scriptPath: '~/packages/loom.ui/runtime/ui-panel.d.ts',
+                    layer: 'top', anim: 0, life: 1, nav: 'hide-other' }] }));
         }
         // Runtime assertion probes intentionally narrow mutable values; type-check separate business usage.
         const typedUsage = {
@@ -148,7 +152,7 @@ for (const manifest of selected) {
             'loom.core': 'const notifier: api.Notifier = loom.notifier; const importedNotifier: api.INotifier = api.notifier; const localNotifier = new api.Notifier(); const manager = new api.ModuleManager(); const token = api.moduleToken<{ value: number }>("typed"); const value: number = manager.get(token)?.value ?? 0;',
             'loom.i18n': 'class Language extends api.LangBase { ok = "OK"; } const language = new Language(); language.translate(); const value: string = loom.i18n.gettext("ok");',
             'loom.report': 'const channel: api.ReportChannel = (...args: any[]) => args; loom.report.enabled = true; api.report.debug = false; const forwarded: boolean = loom.report.to("analytics", "login", { userId: "123" }, undefined, channel); api.report.to("analytics");\n// @ts-expect-error: channel names must be strings.\nloom.report.to(123);\n// @ts-expect-error: service is not a function.\nloom.report("analytics");\n// @ts-expect-error: method is named to.\nloom.report.call("analytics");\n// @ts-expect-error: switches must be boolean.\nloom.report.debug = "true";',
-            'loom.ui': 'const panel: api.UIPanel = new api.UIPanel(); const opened: Promise<Laya.GWidget> = loom.ui.open("resources/Panel.lh"); const manager: api.UIManager = loom.ui; loom.ui.defaultButtonSound = "resources/click.wav"; const ignore: api.UISoundIgnore = new loom.UISoundIgnore();',
+            'loom.ui': 'const panel: api.UIPanel = new api.UIPanel(); const opened: Promise<Laya.GWidget> = loom.ui.open("resources/Panel.lh"); const manager: api.UIManager = loom.ui; loom.ui.defaultButtonSound = "resources/click.wav"; const ignore: api.UISoundIgnore = new loom.UISoundIgnore(); const dialogs: api.UIDialogManager = loom.dialog; const confirmed: Promise<boolean> = dialogs.confirm({ text: "Continue?", title: "Confirm" }); const customDialogs = new loom.UIDialogManager("resources/Dialog.lh"); const result: Promise<boolean> = customDialogs.confirm("Continue?", false); const context: api.UIDialogContext = { text: "Continue?", onConfirm() {}, onCancel() {} }; dialogs.close();',
             'loom.pathfinding': 'const grid: api.AStarGrid = new loom.AStarGrid({ width: 2, height: 2, walkable: new Uint8Array(4).fill(1) }); const reached: boolean = grid.findPath({ x: 0, y: 0 }, { x: 1, y: 1 }).reachedTarget;',
             'loom.address': 'const addresses: Promise<Record<string, string>> = loom.address.load();',
             'loom.atlas': 'const runtime: typeof api.ManualAtlasCollectorRuntime = api.ManualAtlasCollectorRuntime;',

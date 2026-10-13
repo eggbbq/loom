@@ -1,4 +1,4 @@
-import { UIManager, UIFrame, UIPanel, UISoundIgnore, UILife, UINavMode, UILayer, UIAnimtion, UITipsManager, UIToolTipsManager, findUIEntityInParent } from "~/packages/loom.ui";
+import { UIManager, UIFrame, UIPanel, UISoundIgnore, UILife, UINavMode, UILayer, UIAnimtion, UITipsManager, UIToolTipsManager, UIDialogManager, UIDialogContext, UIEntity, dialog, findUIEntityInParent } from "~/packages/loom.ui";
 
 function check(value: unknown, message: string): asserts value {
     if (!value) throw new Error(message);
@@ -52,7 +52,40 @@ export class InstalledUIProbe {
         const create = tipsPrefab.create.bind(tipsPrefab);
         tipsPrefab.create = (...args: any[]) => tipsNode = create(...args) as Laya.GWidget;
         prefabs.set("tips", tipsPrefab);
-        Laya.loader.load = (async (address: string) => prefabs.get(address) ?? null) as typeof load;
+        let dialogShown: (node: Laya.GWidget) => void;
+        const nextDialog = () => new Promise<Laya.GWidget>(resolve => { dialogShown = resolve; });
+        const animationEvents: string[] = [];
+        for (const [address, layer, life, nav] of [
+            ["dialog", UILayer.Top, UILife.Scene, UINavMode.HideOther],
+            ["dialog-pop", UILayer.Pop, UILife.Scene, UINavMode.Default],
+            ["dialog-temp", UILayer.Top, UILife.Temp, UINavMode.Default],
+            ["dialog-persistent", UILayer.Top, UILife.Persistent, UINavMode.Default],
+            ["dialog-early", UILayer.Top, UILife.Scene, UINavMode.Default],
+        ] as const) {
+            prefabs.set(address, new Laya.PrefabImpl({ collectResourceLinks: () => [], parse: () => {
+                const node = new Laya.GWidget() as UIEntity;
+                node.active = false;
+                node.size(120, 80);
+                node.refresh = () => dialogShown(node);
+                if (address === "dialog-early") node.onShow = () => (node.data as UIDialogContext).onConfirm();
+                if (address === "dialog") {
+                    node.onOpenAnimation = async () => { animationEvents.push("open"); };
+                    node.onShown = () => { animationEvents.push("shown"); };
+                    node.onCloseAnimation = async () => { animationEvents.push("close"); };
+                    node.onHidden = () => { animationEvents.push("hidden"); };
+                }
+                const panel = node.addComponent(UIPanel);
+                panel.layer = layer; panel.life = life; panel.nav = nav;
+                panel.anim = address === "dialog" ? UIAnimtion.Both : UIAnimtion.None;
+                return node;
+            } } as any, {}));
+        }
+        Laya.loader.load = (async (...args: any[]) => {
+            const address = args[0];
+            if (prefabs.has(address)) return prefabs.get(address);
+            if (address === "missing" || address === "retry-dialog") return null;
+            return Reflect.apply(load, Laya.loader, args);
+        }) as typeof load;
         try {
             const a = await ui.open("a", { n: 1 }, false);
             check(a && a.data.n === 1 && a.parent === UIFrame.inst.panel, "Native open/data/layer failed");
@@ -137,8 +170,94 @@ export class InstalledUIProbe {
             const hovered = tipsNode;
             await tooltip.text("again");
             check(tipsNode === hovered && hovered.data === "again", "Tooltip cache reuse failed");
-            hovered.removeSelf();
-            console.log("Installed UI: onClick hook/default/ignore/native clicks, native widgets/components, package exports, panel cache, navigation, lifetimes, tips and tooltip reuse passed.");
+            Laya.GRoot.inst.hidePopup(hovered);
+            check(loom.UIDialogManager === UIDialogManager && loom.dialog === dialog && dialog === UIDialogManager.inst,
+                "Dialog package exports/global singleton differ");
+            b.getComponent(UIPanel).layer = UILayer.Top;
+            b.getComponent(UIPanel).nav = UINavMode.Default;
+            await ui.open("b", null, false);
+            const dialogs = new UIDialogManager("dialog");
+            let shown = nextDialog();
+            const firstResult = dialogs.confirm("first");
+            const secondData = { text: "second", title: "Title", confirmText: "OK", cancelText: "Cancel" };
+            const secondResult = new UIDialogManager("dialog").confirm(secondData);
+            const firstDialog = await shown;
+            check(firstDialog.parent === UIFrame.inst.top && firstDialog.data.text === "first"
+                && typeof firstDialog.data.onConfirm === "function", "Dialog UIPanel layer/refresh/data failed");
+            check(!b.active, "Dialog did not participate in HideOther navigation");
+            shown = nextDialog();
+            firstDialog.data.onConfirm();
+            check(await firstResult === true && animationEvents.slice(0, 4).join(",") === "open,shown,close,hidden",
+                "Dialog result returned before panel animations/lifecycle completed");
+            const secondDialog = await shown;
+            check(secondDialog === firstDialog && secondDialog.data.text === secondData.text,
+                "Dialog shared-address queue/UIManager cache failed");
+            secondDialog.data.onCancel();
+            check(await secondResult === false && !secondDialog.parent && b.active,
+                "Dialog cancellation did not close panel/restore navigation");
+            check(!secondDialog.hasListener("confirm") && !secondDialog.hasListener("cancel"), "Dialog result listeners leaked");
+            shown = nextDialog();
+            const removedResult = dialogs.confirm("removed");
+            const removed = await shown;
+            await ui.waitPanelOptionComplete();
+            removed.removeSelf();
+            check(await removedResult === false, "External removal left dialog promise pending");
+            shown = nextDialog();
+            const closeAllResult = dialogs.confirm("close all");
+            const sceneDialog = await shown;
+            await ui.waitPanelOptionComplete();
+            await ui.closeAll();
+            check(await closeAllResult === false, "UIManager.closeAll did not cancel dialog");
+            ui.disposeOnSceneChanged();
+            check(sceneDialog.destroyed, "Dialog Scene lifecycle did not release UIManager cache");
+            shown = nextDialog();
+            const recreatedResult = dialogs.confirm("recreated");
+            check(await shown !== sceneDialog, "Scene dialog was not recreated");
+            dialogs.close();
+            check(await recreatedResult === false, "Explicit close did not cancel dialog");
+            const temporary = new UIDialogManager("dialog-temp");
+            shown = nextDialog();
+            const tempResult = temporary.confirm("temp");
+            const tempDialog = await shown;
+            tempDialog.data.onConfirm();
+            check(await tempResult === true && tempDialog.destroyed, "Dialog Temp lifecycle did not destroy node");
+            const persistent = new UIDialogManager("dialog-persistent");
+            shown = nextDialog();
+            const persistentResult = persistent.confirm("persistent");
+            const persistentDialog = await shown;
+            await ui.waitPanelOptionComplete();
+            persistentDialog.getComponent(UIPanel).close();
+            check(await persistentResult === false, "UIPanel.close did not cancel dialog");
+            ui.disposeOnSceneChanged();
+            check(!persistentDialog.destroyed, "Persistent dialog was released on scene change");
+            shown = nextDialog();
+            const persistentAgain = persistent.confirm("again");
+            check(await shown === persistentDialog, "Persistent dialog cache was not reused");
+            persistentDialog.data.onCancel();
+            check(await persistentAgain === false, "Persistent dialog did not close");
+            const early = new UIDialogManager("dialog-early");
+            shown = nextDialog();
+            check(await early.confirm("early") === true, "Confirmation during onShow was lost");
+            await shown;
+            const retry = new UIDialogManager("retry-dialog");
+            check(await retry.confirm("missing") === false, "Missing dialog must return false like UIManager.open");
+            prefabs.set("retry-dialog", prefabs.get("dialog-pop"));
+            shown = nextDialog();
+            const retryResult = retry.confirm("retry");
+            check((await shown).parent === UIFrame.inst.popup, "Dialog did not use UIPanel configured popup layer");
+            retry.close();
+            check(await retryResult === false, "Retried dialog did not close");
+            const loading = new UIDialogManager("loading-dialog");
+            let completeLoad: (prefab: Laya.PrefabImpl) => void;
+            const fixtureLoad = Laya.loader.load;
+            Laya.loader.load = ((...args: any[]) => args[0] === "loading-dialog"
+                ? new Promise<Laya.PrefabImpl>(resolve => { completeLoad = resolve; })
+                : Reflect.apply(fixtureLoad, Laya.loader, args)) as typeof load;
+            const loadingResult = loading.confirm("loading");
+            loading.close();
+            check(await loadingResult === false, "Close during loading did not cancel request");
+            completeLoad(prefabs.get("dialog"));
+            console.log("Installed UI: onClick hook/default/ignore/native clicks, native widgets/components, package exports, panel cache, navigation, lifetimes, tips/tooltip reuse, dialog UIManager queue/results/animations/navigation/Scene-Temp-Persistent lifecycles/closeAll/early-confirm/retry passed.");
         } finally {
             Laya.loader.load = load;
             Laya.SoundManager.playSound = playSound;

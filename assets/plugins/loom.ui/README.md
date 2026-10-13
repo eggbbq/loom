@@ -2,7 +2,7 @@
 
 公开类和枚举直接挂载到 `loom`，例如 `loom.UIPanel`、`loom.UILife`；导出的 `ui` 与 `UIManager.inst`、`loom.ui` 是同一实例。
 
-独立 LayaAir 3.4.1 UI 运行时插件。包含面板队列、生命周期代理、导航、缓存、动画、关闭按钮和提示管理器。安装包保留原脚本 UUID；项目自行提供面板和提示预制体。
+独立 LayaAir 3.4.1 UI 运行时插件。包含面板队列、生命周期代理、导航、缓存、动画、关闭按钮、提示和确认对话框管理器。安装包保留原脚本 UUID；项目自行提供面板、提示和对话框预制体。
 
 ```ts
 import { UILife, UIPanel, UITipsManager } from "~/packages/loom.ui";
@@ -45,6 +45,46 @@ loom.ui.defaultButtonSound = "resources/audio/ui-click.mp3";
 仅通过 `.on(Laya.Event.CLICK, ...)`、`onMouseClick` 脚本或按钮原生内部监听绑定的按钮，不会触发默认声音或静音处理。动态添加静音组件后，需要再次调用 `onClick` 才会清空按钮声音；移除组件不自动恢复已清空的声音。默认音频及代码赋值的音频需由项目确保包含在发布资源中；按钮 `Sound` 中选择的音频按原生资源引用收集。
 
 `UITipsManager` 默认为 `resources/ui/Tips.lh`；`UIToolTipsManager` 默认为 `resources/ui/Tooltips.lh`，构造器可配置地址。根节点使用 `GWidget`，插件同时写入 `data`、兼容字段 `_data`，并发送原 `setData` 事件。提示 prefab 自行实现显示与移除；文字提示移除后池化复用，悬浮提示复用单实例。安装时不生成业务资源或项目配置。
+
+## 确认对话框
+
+`UIDialogManager` 通过 `UIManager.open/close` 管理挂载了 `UIPanel` 的对话框，只负责确认结果和请求队列，默认地址为 `resources/ui/Dialog.lh`。`loom.dialog` 与 `UIDialogManager.inst` 是同一对象：
+
+```ts
+const confirmed = await loom.dialog.confirm({
+    title: "删除确认",
+    text: "确定删除这条记录吗？",
+    confirmText: "删除",
+    cancelText: "取消",
+});
+if (confirmed) deleteRecord();
+
+// 也支持直接传文字，或使用自己的预制体。
+await loom.dialog.confirm("确定继续吗？");
+const customDialog = new loom.UIDialogManager("resources/ui/MyDialog.lh");
+await customDialog.confirm("确定继续吗？");
+
+// 第二个参数控制本次打开、关闭是否播放 UIPanel 动画。
+await customDialog.confirm("确定继续吗？", false);
+```
+
+预制体根节点使用 `GWidget` 并挂载 `UIPanel`，在该组件上配置 `layer`、`life`、`nav`、`anim`、`center` 和 `full`。例如将 `layer` 设为 `UILayer.Pop` 或 `UILayer.Top`；`Scene` 支持场景释放，`Temp` 每次关闭后销毁，`Persistent` 保留缓存。导航、布局、打开/关闭动画和生命周期回调均沿用普通面板逻辑；模态遮罩仍由项目预制体实现。
+
+字符串参数转换为 `{ text }`，管理器将文字配置及 `onConfirm/onCancel` 回调放入根节点 `data`，由 `UIPanel.refresh()` 调用根节点的 `refresh()` 更新内容。按钮通过回调返回结果，打开动画期间同样有效：
+
+```ts
+// 在项目的 GWidget runtime 类中实现。
+onInit() {
+    confirmButton.onClick(() => this.data.onConfirm());
+    cancelButton.onClick(() => this.data.onCancel());
+}
+
+refresh() {
+    // 将 this.data.text、this.data.title 等写入项目自己的控件。
+}
+```
+
+确认返回 `true`，取消、`UIPanel.close()`、`loom.ui.closeAll()`、面板移除或 `loom.dialog.close()` 返回 `false`。返回结果前等待关闭操作完成。`close()` 也会取消正在加载的当前请求。同一 prefab 地址的 `confirm()` 调用按顺序显示，多个管理器实例也共享该地址的队列；关闭当前请求后继续显示下一个。加载失败、根节点类型错误或缺少 `UIPanel` 时返回 `false`，后续请求仍可重试。显示完成后也兼容根节点的 `confirm/cancel` 事件；按钮优先使用 `data` 中的回调。
 
 构建：`./build.sh loom.ui`。安装验证：`npm run verify:ui`；测试和示例不进入安装包。
 
