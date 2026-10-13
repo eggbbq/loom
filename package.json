@@ -1,6 +1,6 @@
 {
   "name": "loom.kits",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "private": true,
   "description": "LayaAir editor plugins and development tools.",
   "license": "MIT",
@@ -30,6 +30,7 @@
     "verify:tables": "node scripts/verify-tables.mjs",
     "verify:sdk": "node scripts/verify-sdk.mjs",
     "verify:report": "node scripts/verify-js-plugins.mjs loom.report",
+    "verify:scene": "node scripts/verify-js-plugins.mjs loom.scene",
     "verify:pathfinding": "node scripts/verify-js-plugins.mjs loom.pathfinding",
     "verify:startup": "node scripts/verify-package-startup.mjs --js",
     "verify:remote": "node scripts/verify-remote-plugins.mjs",

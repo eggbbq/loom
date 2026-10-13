@@ -1,0 +1,8 @@
+{
+  "name": "loom.scene",
+  "displayName": "Loom Scene",
+  "version": "1.0.0",
+  "description": "Await asynchronous beforeOpen and afterOpen hooks around native Laya.Scene.open.",
+  "author": "eggbbq",
+  "license": "MIT"
+}

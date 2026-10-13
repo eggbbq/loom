@@ -8,11 +8,40 @@ const startupNamespaces = typeof loom === "undefined" ? {} : {
     pathfinding: !!loom.AStarGrid,
     sdk: !!loom.sdk?.init,
     report: typeof loom.report?.to === "function",
+    scene: !!loom.SceneHook && loom.scene === loom.SceneManager?.inst && loom.scene.hooks instanceof loom.SceneHook,
 };
 const startupErrors: string[] = [];
-for (const name of ["core", "address", "bt", "i18n", "ui", "pathfinding", "sdk", "report"]) {
+for (const name of ["core", "address", "bt", "i18n", "ui", "pathfinding", "sdk", "report", "scene"]) {
     if (!startupNamespaces[name as keyof typeof startupNamespaces]) startupErrors.push(`${name} unavailable at business module evaluation`);
 }
+// 在业务模块顶层直接调用 open；钩子拒绝后不得尝试加载这个不存在的资源。
+const startupSceneHookTask = (async () => {
+    const previous = loom.scene.hooks;
+    const failure = new Error("Expected startup scene interception");
+    const param = { startup: true };
+    let received = false;
+    const hooks = {
+        async beforeOpen(url: string, value: any) {
+            if (this !== hooks || url !== "__loomStartupScene.ls" || value !== param)
+                throw new Error("early injected scene hook object/arguments lost");
+            await Promise.resolve();
+            received = true;
+            throw failure;
+        },
+    };
+    loom.scene.hooks = hooks;
+    if (loom.scene.hooks !== hooks) throw new Error("early hooks assignment lost object identity");
+    let pending: Promise<Laya.Scene>;
+    try { pending = Laya.Scene.open("__loomStartupScene.ls", true, param); }
+    finally { loom.scene.hooks = previous; }
+    let rejected: unknown;
+    try { await pending; } catch (error) { rejected = error; }
+    if (!received || rejected !== failure) throw new Error("early scene interception failed");
+    return true;
+})().catch(error => {
+    startupErrors.push(String(error));
+    return false;
+});
 try {
     const message = loom.msg<number>("probe:startup-notifier");
     let received = 0;
@@ -57,7 +86,12 @@ try {
 } catch (error) {
     startupErrors.push(String(error));
 }
-(window as any).__loomPackageStartup = { ready: startupErrors.length === 0, namespaces: startupNamespaces, errors: startupErrors };
+const startupResult = { ready: false, sceneHookReady: false, namespaces: startupNamespaces, errors: startupErrors };
+(window as any).__loomPackageStartup = startupResult;
+(window as any).__loomPackageStartupTask = startupSceneHookTask.then(ready => {
+    startupResult.sceneHookReady = ready;
+    startupResult.ready = ready && startupErrors.length === 0;
+});
 
 @Laya.regClass()
 export class PackageStartupBusiness extends Laya.Script {}

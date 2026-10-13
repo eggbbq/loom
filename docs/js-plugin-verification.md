@@ -1,6 +1,6 @@
 # 预编译 JS 安装包验证
 
-在 LayaAir CLI 3.4.1、TypeScript 5.9.3、macOS Chromium 下，七个插件均已生成 JS 安装包，并通过独立安装、原生功能探针与 Web 发布验证。此流程已成为 `./build.sh` 与 `npm run build` 的默认构建方式。
+在 LayaAir CLI 3.4.1、TypeScript 5.9.3、macOS Chromium 下，各插件均已生成 JS 安装包，并通过独立安装、原生功能探针与 Web 发布验证。此流程已成为 `./build.sh` 与 `npm run build` 的默认构建方式。
 
 具体操作、类型配置和生成目录说明见 [安装与构建指南](plugin-distribution.md)。本页记录实际验证范围和结果。
 
@@ -28,11 +28,14 @@
 | i18n | 存储、服务与类引用一致性、字典替换、重复手动翻译 |
 | pathfinding | core 依赖与导入身份、固定网格/跨 chunk/负坐标、动态障碍、最近可达、平滑、Scene 烘焙、UI 资源库写入 |
 | ui | 面板导航/缓存/生命周期/提示；Chromium 中真实 Preview/Web prefab UUID 绑定、打开/刷新/关闭 |
+| scene | SceneManager 单例与全局/导入类身份一致；hooks 初始为 SceneHook 实例，整体注入保留对象引用；beforeOpen 等待期间不发起原生资源加载，原生打开与 complete 后等待 afterOpen；参数/场景实例与回调重载透传，前置失败阻止加载、后置失败保留已打开场景 |
 | tables | 仅安装 JS 包后创建项目模板；schema 后生成时创建适配器；自定义模板、UUID 保留、Scene 恢复同一实例；Chromium 中官方 Preview/Web 业务顶层零 import 访问实例 |
 
 每个包另行检查：无实现 TS、UUID 无重复、TypeScript 公开 API 声明能正常编译且拒绝不存在的成员、独立 Web 构建。core/bt/ui 的代表性组件在原生编辑器类型注册表中保留原始 UUID 与描述。
 
-正序和倒序清单中，**Scene、官方 Preview、Web 都在零 import 的业务模块顶层之前提供六个包的 loom API**。Core、BT、Pathfinding 和 UI 的公开类与工具直接挂载到 `loom`，服务通过 `loom.address`、`loom.i18n`、`loom.ui` 访问。atlas 不提供 loom.atlas，但参与加载与资源发布。两种浏览器页面均断言全部 runtime.js 在业务 bundle 之前，core 在 pathfinding 之前。真实页面没有脚本重排。类型通过 include 的 index.d.ts 提供。
+2026-10-13 新增 `loom.scene` 1.0.0，源码按 SceneHook、SceneManager 和 scene-api 拆分，钩子接口为 `ISceneHook`。默认钩子验证等待可选 UI 关闭、无 UI 独立运行；源码测试覆盖 UI 关闭抛错/拒绝后继续打开场景及 Loading 显示/隐藏调用。仓库发布版本为 `v0.7.0`。`npm run build`、`npm run verify:js -- --skip-build`、`npm run verify:remote -- --local --skip-build` 和 `npm run build:web` 均通过，覆盖全部十个分发插件及 HTTP 安装。Scene、官方 Preview 与 Web 在正序/倒序安装下，业务模块顶层无 import 即可注册场景钩子并调用 `Laya.Scene.open`；启动探针通过异步前置拒绝验证原生加载被阻止。原生成功打开及 afterOpen 等待顺序由独立安装的 Scene 探针验证；未将这一项作为浏览器中场景成功打开的覆盖证明。
+
+正序和倒序清单中，**Scene、官方 Preview、Web 都在零 import 的业务模块顶层之前提供九个包的 loom API**。Core、BT、Pathfinding、UI 和 Scene 的公开类与工具直接挂载到 `loom`，服务通过 `loom.address`、`loom.i18n`、`loom.ui`、`loom.report`、`loom.scene` 访问，SDK 项目适配器提供 `loom.sdk`。atlas 不提供 loom.atlas，但参与加载与资源发布。两种浏览器页面均断言全部 runtime.js 在业务 bundle 之前，core 在 pathfinding 之前。真实页面没有脚本重排。类型通过 include 的 index.d.ts 提供。
 
 `tables` 是后加入的项目适配插件，使用独立的 `verify:tables` 验证：包不引用项目 schema，安装后生成的 TS 和 `loadBeforeMain` bundle 将 `Tables` 实例挂到 `loom.tables`；准确的全局类型来自项目适配器。验证使用实际安装包、消费工程生成的表代码和官方脚本加载顺序，不加载表数据。此前七包的正序/倒序验证记录不代表存在 schema 时的 Tables 适配器验证；全量 JS 功能验证另行调用此安装测试。
 
@@ -68,7 +71,7 @@ Demo 在 IDE 内完成播放、原生“重新载入所有插件”后再次播�
 
 ## HTTP 安装验证
 
-`npm run verify:remote -- --local --skip-build` 用本地 HTTP 服务提供最终 `.layapkg`，消费工程的清单只填写 HTTP URL，不放入本地安装包副本。验证正序/倒序清单下七个包下载、原生 Scene 加载、TypeScript 类型、官方 Preview 与 Web 的业务顶层调用。
+`npm run verify:remote -- --local --skip-build` 用本地 HTTP 服务提供最终 `.layapkg`，消费工程的清单只填写 HTTP URL，不放入本地安装包副本。验证正序/倒序清单下全部分发包下载、原生 Scene 加载、TypeScript 类型、官方 Preview 与 Web 的业务顶层调用。
 
 Release 发布后，`npm run verify:remote -- --skip-build` 从生成清单中的真实下载地址重复同一验证。机器结果在 `temp/verification-logs/remote-js-package-startup.json`；后执行的检查会更新该报告。发布与安装操作见 [安装与构建指南](plugin-distribution.md)。
 
